@@ -60,7 +60,7 @@ are in block RAM (`CORE/verilog/bram_m65.v`, selected by `G_BOARD` in `CORE/vhdl
 ### Paddle drain only for the 1351 mouse (board tops)
 
 `M2M/vhdl/top_mega65-r*.vhd`: the paddle discharge pulses (pins 5 and 9, about 2 kHz) upset optical
-Amiga mice, so `paddle_drain_o` is gated with the menu bit of the 1351 mouse (`main_osm_control_m(48)`,
+Amiga mice, so `paddle_drain_o` is gated with the menu bit of the 1351 mouse (`main_osm_control_m(51)`,
 `C_MENU_MOUSE1351` in `CORE/vhdl/mega65.vhd`; update the number if the menu changes). The framework's
 output goes to the new signal `fw_paddle_drain`.
 
@@ -118,6 +118,12 @@ The framework does not remember mounted images (issue #13). Changes:
   and `MNT_FILE` (empty string = off).
 * `CORE/m2m-rom/make_rom.sh` writes `MNT_ENTRIES` and `MNT_BUF_SIZE` to `globals.asm` (qasm cannot
   compute expressions); `CORE/m2m-rom/m2m-rom.asm`: `HEAP_SIZE` 2048 words smaller for the new variables.
+* Menu items "Remember floppies" and "Remember TOS/cartridge": `MNT_RESTORE` reads their bits from
+  `M2M$CFM_DATA` (`_MNT_CFM_GET`; the settings file is loaded before, by `HELP_MENU_INIT`) and skips the
+  first `MNT_FD_NUM` vdrives or all CRTs/ROMs when they are off (the paths stay remembered).
+  `make_rom.sh` writes `MNT_OPT_FD`, `MNT_OPT_ROM` (menu line of `OPTM_G_RemFloppy`, `OPTM_G_RemRom` in
+  `config.vhd`) and `MNT_FD_NUM` (`C_MNT_FD_NUM` in `globals.vhd`) to `globals.asm`. The QNICE emulator
+  test defines `MNT_CFM_STUB` and replaces `_MNT_CFM_GET`.
 
 Generic, a candidate for upstream.
 
@@ -126,6 +132,14 @@ Generic, a candidate for upstream.
 `M2M/rom/options.asm` (`ROSM_SAVE`): the vdrive id of the "any cache dirty?" loop was kept in `R8`, but
 `VD_DRV_READ` returns the dirty flag in `R8`, so with more than one virtual drive the loop never ended.
 The id is now kept in `R1`. This is a framework bug (candidate for upstream).
+
+### HDMI: scaler with downscaling
+
+`M2M/vhdl/av_pipeline/digital_pipeline.vhd`: `ascal` is built with `DOWNSCALE => true` (M2M: `false`, "we use
+ascal only to upscale"). The ST line is 744 pixels wide with the normal borders (840 with full borders), wider
+than the 4:3 area of 576p (720), 720x480 (720) and 640x480 (640). Without downscaling, ascal advances at most one
+input pixel per output pixel, so it cut off the right part of the line: the picture looked shifted to the right
+(left border wide, right border narrow), only 800x600 and 720p were right. Generic, a candidate for upstream.
 
 ### JTAG probe of the QNICE CPU bus
 

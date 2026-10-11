@@ -105,7 +105,7 @@ Requirements
   * your floppy disk images (`.st`), hard disk images (`.hd`, `.img`, `.vhd`) and cartridges (`.stc`, `.img`)
   * optionally `stcfg`, an empty settings file, if you want the menu settings to be saved (included
     in the release zip, or `cd M2M/tools && ./make_config.sh stcfg auto`). The file must have exactly
-    as many bytes as the menu has lines (`OPTM_SIZE` in `CORE/vhdl/config.vhd`, currently 99). When
+    as many bytes as the menu has lines (`OPTM_SIZE` in `CORE/vhdl/config.vhd`, currently 102). When
     the menu changes in a new release, a settings file of the old size is ignored: use the new one.
   * optionally `stmount`, if the core shall remember the mounted floppy and hard disk images and
     the TOS and cartridge chosen in the menu (included in the release zip). It must have exactly
@@ -123,7 +123,10 @@ Usage
   select its line in the menu and press <kbd>Space</kbd>; this also forgets it. A drive that still
   has unsaved writes stays mounted until they are written to the SD card (a few seconds). A long press of the reset button restarts the core like a power cycle, so the
   remembered images come back; unmount them in the menu if you want empty drives. An image that
-  is no longer on the SD card is skipped.
+  is no longer on the SD card is skipped. In "System settings", "Remember floppies" and
+  "Remember TOS/cartridge" (both on by default) decide whether the floppies and the TOS and
+  cartridge come back at the next start; when off, the drives start empty and `tos.img` is used.
+  Hard disks are always remembered.
 * Keyboard mapping (the MEGA65 has a C64 style layout, symbols are mapped by position):
 
   | MEGA65               | Atari ST             |
@@ -186,7 +189,8 @@ Using disk images
 * The menu shows the name of the mounted image next to the drive. To **unmount (eject)** a drive,
   select its line and press <kbd>Space</kbd>.
 * With `/atarist/stmount` on the SD card (in the release zip), the mounted images and the chosen
-  TOS and cartridge are **remembered** and loaded again at the next start.
+  TOS and cartridge are **remembered** and loaded again at the next start ("Remember floppies" and
+  "Remember TOS/cartridge" in "System settings" switch this off for the floppies or the TOS).
 
 ### Floppy disk images
 

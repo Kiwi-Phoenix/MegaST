@@ -406,9 +406,14 @@ _MNTRS_7        MOVE    0, @R0
                 MOVE    1, @R0
 
                 ; CRTs/ROMs first: some CRT/ROM loads unmount drives
+                ; (only if the menu item Remember TOS/cartridge is on)
                 XOR     R1, R1                  ; R1: CRT/ROM id
                 MOVE    CRTROM_MAN_NUM, R2
                 MOVE    @R2, R2                 ; R2: amount of CRTs/ROMs
+                MOVE    MNT_OPT_ROM, R8
+                RSUB    _MNT_CFM_GET, 1
+                CMP     0, R8
+                RBRA    _MNTRS_9, Z             ; off: skip the CRTs/ROMs
 _MNTRS_8        CMP     R2, R1
                 RBRA    _MNTRS_9, Z
                 MOVE    R1, R8
@@ -420,12 +425,19 @@ _MNTRS_8        CMP     R2, R1
 _MNTRS_9        XOR     R1, R1                  ; R1: vdrive id
                 MOVE    VDRIVES_NUM, R2
                 MOVE    @R2, R2                 ; R2: amount of vdrives
+                MOVE    MNT_OPT_FD, R8          ; R3: menu item Remember
+                RSUB    _MNT_CFM_GET, 1         ; floppies (the first
+                MOVE    R8, R3                  ; MNT_FD_NUM vdrives)
 _MNTRS_10       CMP     R2, R1
                 RBRA    _MNTRS_11, Z
-                MOVE    R1, R8
+                CMP     MNT_FD_NUM, R1          ; floppy drive?
+                RBRA    _MNTRS_10A, !N          ; no (R1 >= MNT_FD_NUM)
+                CMP     0, R3
+                RBRA    _MNTRS_10B, Z           ; floppy, not remembered
+_MNTRS_10A      MOVE    R1, R8
                 XOR     R9, R9
                 RSUB    _MNT_LOAD, 1
-                ADD     1, R1
+_MNTRS_10B      ADD     1, R1
                 RBRA    _MNTRS_10, 1
 
 _MNTRS_11       MOVE    MNT_SHOWN, R0           ; hide the window, if shown
@@ -552,6 +564,33 @@ _MNTL_9         MOVE    MNT_PEND, R8
 
 _MNTL_RET       SYSCALL(leave, 1)
                 RET
+
+; Read the bit of a menu item from M2M$CFM_DATA
+; Input:  R8: menu index
+; Output: R8: 1 if the menu item is selected, else 0
+; (CORE/sim/mntmem defines MNT_CFM_STUB: the QNICE emulator has no M2M$CFM_DATA)
+#ifndef MNT_CFM_STUB
+_MNT_CFM_GET    INCRB
+
+                MOVE    R8, R0
+                MOVE    R8, R1
+                AND     0xFFFB, SR              ; clear Carry
+                SHR     4, R0                   ; R0: window = index / 16
+                AND     0x000F, R1              ; R1: bit = index % 16
+                MOVE    M2M$CFM_ADDR, R2
+                MOVE    R0, @R2
+                MOVE    1, R3
+                AND     0xFFFD, SR              ; clear X
+                SHL     R1, R3
+                MOVE    M2M$CFM_DATA, R2
+                XOR     R8, R8
+                AND     @R2, R3                 ; R3: 0 = not selected
+                RBRA    _MNTCG_RET, Z
+                MOVE    1, R8
+
+_MNTCG_RET      DECRB
+                RET
+#endif
 
 ; Set the bit of a menu item in M2M$CFM_DATA
 ; Input:  R8: menu index

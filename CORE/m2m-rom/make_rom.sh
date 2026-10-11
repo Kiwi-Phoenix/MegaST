@@ -42,6 +42,13 @@ awk '/constant OPTM_G_Reset / {gsub(/.*:=|;.*/, "", $0); split($0, a, " "); prin
 awk '/constant C_VDNUM/ {gsub(/.*:=|;.*/, "", $0); split($0, a, " "); vd=a[1]+0; if (vd == 0) vd=1}
      /constant C_CRTROMS_MAN_NUM/ {gsub(/.*:=|;.*/, "", $0); split($0, a, " "); cr=a[1]+0; if (cr == 0) cr=1}
      END {printf("MNT_ENTRIES                 .EQU %d\nMNT_BUF_SIZE                .EQU %d\n", vd+cr, (vd+cr)*256)}' ../vhdl/globals.vhd >> globals.asm
+# MegaST: menu lines "Remember floppies" and "Remember TOS/cartridge" (index in OPTM_GROUPS of ../vhdl/config.vhd)
+# and the number of floppy drives (C_MNT_FD_NUM in ../vhdl/globals.vhd), used by MNT_RESTORE
+awk '/constant OPTM_GROUPS/ {g=1; i=0; next}
+     g && /OPTM_G_/ {if ($0 ~ /OPTM_G_RemFloppy /) printf("MNT_OPT_FD                  .EQU %d\n", i);
+                     if ($0 ~ /OPTM_G_RemRom /)    printf("MNT_OPT_ROM                 .EQU %d\n", i); i++}
+     g && /\);/ {g=0}' ../vhdl/config.vhd >> globals.asm
+awk '/constant C_MNT_FD_NUM/ {gsub(/.*:=|;.*/, "", $0); split($0, a, " "); printf("MNT_FD_NUM                  .EQU %s\n", a[1])}' ../vhdl/globals.vhd >> globals.asm
 
 ##############################################################################
 # M2M framework: Generate shell_fhandles.asm

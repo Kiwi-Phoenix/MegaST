@@ -310,31 +310,31 @@ constant C_MENU_VIKING         : natural := 36;
 constant C_MENU_STEREO         : natural := 37;
 constant C_MENU_WPROT          : natural := 38;
 constant C_MENU_FDSWAP         : natural := 39;
-constant C_MENU_AMIGAMOUSE     : natural := 47;   -- mouse type: 46 Atari (default), 47 Amiga, 48 1351
-constant C_MENU_MOUSE1351      : natural := 48;
-constant C_MENU_JOYSWAP        : natural := 52;   -- mouse port: 51 port 1 (default), 52 port 2
-constant C_MENU_STEPADS        : natural := 54;
-constant C_MENU_PMOD           : natural := 55;
-constant C_MENU_CUBASE         : natural := 56;
-constant C_MENU_KBD_US         : natural := 60;   -- keyboard: 59 positional (default), 60 as printed US, 61 UK
-constant C_MENU_KBD_UK         : natural := 61;
-constant C_MENU_HDMI_16_9_50   : natural := 67;
-constant C_MENU_HDMI_16_9_60   : natural := 68;
-constant C_MENU_HDMI_4_3_50    : natural := 69;
-constant C_MENU_HDMI_5_4_50    : natural := 70;
-constant C_MENU_HDMI_640_60    : natural := 71;
-constant C_MENU_HDMI_720_5994  : natural := 72;
-constant C_MENU_SVGA_800_60    : natural := 73;
-constant C_MENU_HDMI_DVI       : natural := 75;
-constant C_MENU_VGA_15KHZ      : natural := 82;
-constant C_MENU_VGA_CSYNC      : natural := 83;
-constant C_MENU_SCANLINES_25   : natural := 86;
-constant C_MENU_SCANLINES_50   : natural := 87;
-constant C_MENU_SCANLINES_75   : natural := 88;
-constant C_MENU_CRT_EMULATION  : natural := 91;
-constant C_MENU_HDMI_ZOOM      : natural := 92;
-constant C_MENU_IMPROVE_AUDIO  : natural := 93;
--- 95 "Reset Atari ST" is handled by the firmware (OSM_SEL_POST in m2m-rom.asm)
+constant C_MENU_AMIGAMOUSE     : natural := 50;   -- mouse type: 49 Atari (default), 50 Amiga, 51 1351
+constant C_MENU_MOUSE1351      : natural := 51;
+constant C_MENU_JOYSWAP        : natural := 55;   -- mouse port: 54 port 1 (default), 55 port 2
+constant C_MENU_STEPADS        : natural := 57;
+constant C_MENU_PMOD           : natural := 58;
+constant C_MENU_CUBASE         : natural := 59;
+constant C_MENU_KBD_US         : natural := 63;   -- keyboard: 62 positional (default), 63 as printed US, 64 UK
+constant C_MENU_KBD_UK         : natural := 64;
+constant C_MENU_HDMI_16_9_50   : natural := 70;
+constant C_MENU_HDMI_16_9_60   : natural := 71;
+constant C_MENU_HDMI_4_3_50    : natural := 72;
+constant C_MENU_HDMI_5_4_50    : natural := 73;
+constant C_MENU_HDMI_640_60    : natural := 74;
+constant C_MENU_HDMI_720_5994  : natural := 75;
+constant C_MENU_SVGA_800_60    : natural := 76;
+constant C_MENU_HDMI_DVI       : natural := 78;
+constant C_MENU_VGA_15KHZ      : natural := 85;
+constant C_MENU_VGA_CSYNC      : natural := 86;
+constant C_MENU_SCANLINES_25   : natural := 89;
+constant C_MENU_SCANLINES_50   : natural := 90;
+constant C_MENU_SCANLINES_75   : natural := 91;
+constant C_MENU_CRT_EMULATION  : natural := 94;
+constant C_MENU_HDMI_ZOOM      : natural := 95;
+constant C_MENU_IMPROVE_AUDIO  : natural := 96;
+-- 98 "Reset Atari ST" is handled by the firmware (OSM_SEL_POST in m2m-rom.asm)
 
 ---------------------------------------------------------------------------------------------
 -- main_clk (MiSTer core's clock)
