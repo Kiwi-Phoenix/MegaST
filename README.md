@@ -14,13 +14,19 @@ on the MEGA65. Please report problems and successes in the
 [issues](https://github.com/freemchr/MegaST/issues).
 
 **Latest version: [0.4.14 beta](https://github.com/freemchr/MegaST/releases/tag/v0.4.14)**
-(October 10, 2026, pre-release for testing): hard disk images restored at power-on are seen by TOS
+(October 10, 2026): hard disk images restored at power-on are seen by TOS
 again (issues #11, #12), and a mouSTer no longer holds the right mouse button down (issue #17).
 Since 0.4.12 the core remembers the mounted disk images and the chosen TOS
 and cartridge (copy `atarist/stmount` from the zip, issue #13). **All versions up to 0.4.10 damage
 hard disk images when writing** (issue #11): update, and restore your images from a backup. Core
 files for the R3/R3A, R4, R5 and R6. Coming from 0.4.7 or older: copy the new `atarist/stcfg`
 (99 bytes) from the zip, otherwise the menu settings are not saved.
+
+**Test build: [0.4.15-test1](https://github.com/freemchr/MegaST/releases/tag/v0.4.15-test1)**
+(R3/R3A and R6, not a release): HDMI picture centred in 576p, 720x480 and 640x480, menu switches to
+start without the remembered floppies or TOS/cartridge, MEGA + F1..F9 for F11..F20 (issue #18). It
+needs its own new `atarist/stcfg` from its zip. The HDMI centring is confirmed on an R6; feedback
+on the rest is welcome in the issues.
 
 **Support:** MegaST is free and open source. If you enjoy it, you can support its development via
 [GitHub Sponsors](https://github.com/sponsors/freemchr).
@@ -36,11 +42,13 @@ Tested on a MEGA65 R6
 | Floppy disks: loading, changing disks, reset with a disk inserted, saving | works |
 | Hard disk: 4 GB `.vhd` image (MiSTer image), boot, reading files, launching programs | works |
 | Hard disk: writing files | broken up to 0.4.10, works since 0.4.11 (tester report, issue #11) |
+| Remembered disk images restored at power-on | broken in 0.4.12/0.4.13, works since 0.4.14 (tester reports, issues #11, #12) |
 | MEGA65 keyboard, all keys (A fixed in 0.4.7), numeric keypad via MEGA | works |
 | Atari ST mouse, Amiga mouse (optical, incl. right button), in port 1 or port 2 | works |
 | Joystick, with debouncing for bouncing and worn switches (Suncom TAC-2) | works |
 | Menu settings saved on the SD card (`stcfg`) | works |
 | VGA scanlines, full borders | works |
+| HDMI picture centred, not cut off on the right (576p, 720x480, 640x480) | fixed in 0.4.15-test1 |
 | Games: Golden Axe, Great Giana Sisters, Turrican | work |
 | Cartridges, PMOD serial/MIDI/printer, Cubase dongles, Viking card, 1351 mouse, mono monitor | not tested yet |
 | HDMI "DVI mode (no sound)" with a DVI monitor | works (tester report, issue #4) |
@@ -122,7 +130,7 @@ Usage
   |----------------------|----------------------|
   | F1, F3, F5, F7, F9   | F1, F3, F5, F7, F9   |
   | Shift + F1 .. F9     | F2, F4, F6, F8, F10  |
-  | MEGA + F1 .. F9 (with or without Shift) | Shift + F1 .. F10 (F11 .. F20 in GFA-Basic, STOS) |
+  | MEGA + F1 .. F9 (with or without Shift, since 0.4.15-test1) | Shift + F1 .. F10 (F11 .. F20 in GFA-Basic, STOS) |
   | F11, Run/Stop        | Undo                 |
   | F13                  | Help                 |
   | Inst/Del             | Backspace            |
@@ -222,8 +230,8 @@ on your computer and convert `.msa` to `.st` (e.g. with Hatari's `hmsa` tool:
 **The hard disk is mounted, but there is no drive C:.** Reset the ST after mounting (see above).
 With Atari TOS the image needs a bootable hard disk driver, and a C: icon on the desktop. A quick
 test: boot the EmuTOS from the release zip. If EmuTOS shows C:, the image works and the problem is
-the driver or the desktop setup. (With 0.4.12 some users see images that are not found even with
-a correct setup; this is being investigated in issues #11 and #12.)
+the driver or the desktop setup. (0.4.12 and 0.4.13 ejected a hard disk image restored at power-on
+again inside the core, so TOS did not see it; fixed in 0.4.14, issues #11 and #12.)
 
 **The game does not start from the floppy.** Mount the disk on "Floppy A:" and reset the ST. Some
 games need a real Atari TOS (TOS 1.02 or 1.04 for the ST, see [TOS](#tos)), some need 512 KB or
