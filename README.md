@@ -7,26 +7,20 @@ Alexey Melnikov and others) to the [MEGA65](https://mega65.org), using the
 [MiSTer2MEGA65](https://github.com/sy2002/MiSTer2MEGA65) framework.
 MEGA65 port by Chris Freeman ([@freemchr](https://github.com/freemchr)).
 
-**Status: beta, running on real hardware.** MegaST is developed and tested on a MEGA65 R6 and
+**Status: stable, running on real hardware.** MegaST is developed and tested on a MEGA65 R6 and
 runs games and GEM programs from floppy and hard disk images. Download the core from
 [Releases](https://github.com/freemchr/MegaST/releases); see below for what has been tested
 on the MEGA65. Please report problems and successes in the
 [issues](https://github.com/freemchr/MegaST/issues).
 
-**Latest version: [0.4.14 beta](https://github.com/freemchr/MegaST/releases/tag/v0.4.14)**
-(October 10, 2026): hard disk images restored at power-on are seen by TOS
-again (issues #11, #12), and a mouSTer no longer holds the right mouse button down (issue #17).
-Since 0.4.12 the core remembers the mounted disk images and the chosen TOS
-and cartridge (copy `atarist/stmount` from the zip, issue #13). **All versions up to 0.4.10 damage
-hard disk images when writing** (issue #11): update, and restore your images from a backup. Core
-files for the R3/R3A, R4, R5 and R6. Coming from 0.4.7 or older: copy the new `atarist/stcfg`
-(99 bytes) from the zip, otherwise the menu settings are not saved.
-
-**Test build: [0.4.15-test1](https://github.com/freemchr/MegaST/releases/tag/v0.4.15-test1)**
-(R3/R3A and R6, not a release): HDMI picture centred in 576p, 720x480 and 640x480, menu switches to
-start without the remembered floppies or TOS/cartridge, MEGA + F1..F9 for F11..F20 (issue #18). It
-needs its own new `atarist/stcfg` from its zip. The HDMI centring is confirmed on an R6; feedback
-on the rest is welcome in the issues.
+**Latest version: [1.0](https://github.com/freemchr/MegaST/releases/tag/v1.0)**
+(October 11, 2026), the first stable version: the HDMI picture is centred in 576p, 720x480 and
+640x480, "Remember floppies" and "Remember TOS/cartridge" in the menu, and MEGA + F1..F9 for
+F11..F20 (issue #18). The core remembers the mounted disk images and the chosen TOS and cartridge
+(copy `atarist/stmount` from the zip, issue #13). Core files for the R3/R3A, R4, R5 and R6.
+**Copy the new `atarist/stcfg` (102 bytes) from the zip**, otherwise the menu settings are not
+saved. **All versions up to 0.4.10 damage hard disk images when writing** (issue #11): if you
+wrote to an image with one of them, restore it from a backup.
 
 **Support:** MegaST is free and open source. If you enjoy it, you can support its development via
 [GitHub Sponsors](https://github.com/sponsors/freemchr).
@@ -48,7 +42,7 @@ Tested on a MEGA65 R6
 | Joystick, with debouncing for bouncing and worn switches (Suncom TAC-2) | works |
 | Menu settings saved on the SD card (`stcfg`) | works |
 | VGA scanlines, full borders | works |
-| HDMI picture centred, not cut off on the right (576p, 720x480, 640x480) | fixed in 0.4.15-test1 |
+| HDMI picture centred, not cut off on the right (576p, 720x480, 640x480) | works (since 1.0) |
 | Games: Golden Axe, Great Giana Sisters, Turrican | work |
 | Cartridges, PMOD serial/MIDI/printer, Cubase dongles, Viking card, 1351 mouse, mono monitor | not tested yet |
 | HDMI "DVI mode (no sound)" with a DVI monitor | works (tester report, issue #4) |
@@ -133,7 +127,7 @@ Usage
   |----------------------|----------------------|
   | F1, F3, F5, F7, F9   | F1, F3, F5, F7, F9   |
   | Shift + F1 .. F9     | F2, F4, F6, F8, F10  |
-  | MEGA + F1 .. F9 (with or without Shift, since 0.4.15-test1) | Shift + F1 .. F10 (F11 .. F20 in GFA-Basic, STOS) |
+  | MEGA + F1 .. F9 (with or without Shift, since 1.0) | Shift + F1 .. F10 (F11 .. F20 in GFA-Basic, STOS) |
   | F11, Run/Stop        | Undo                 |
   | F13                  | Help                 |
   | Inst/Del             | Backspace            |

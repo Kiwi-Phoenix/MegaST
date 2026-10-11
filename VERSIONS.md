@@ -1,3 +1,29 @@
+Version 1.0 - October 11, 2026
+==============================
+
+The first stable version. Since the first beta (0.4.6) the floppy and hard disk images, the
+keyboard, the mice, the joysticks and the settings have been tested by the developer and by
+testers on R6 and R3A boards. New in 1.0:
+
+* **HDMI picture centred:** in 576p (4:3 and 5:4), 720x480 and 640x480 the right side of the
+  picture was cut off and the picture looked shifted to the right, because the ST line (744
+  pixels, 840 with full borders) is wider than the 4:3 area of these modes and the scaler could
+  only cut it. The scaler now shrinks the line to fit, so both borders are equal.
+* **"Remember floppies" and "Remember TOS/cartridge"** in "System settings" (both on by default):
+  switch one off to start without the last floppies or without the last TOS/cartridge (then
+  `tos.img` is used). Hard disks are always remembered.
+* **MEGA + F1..F9 gives Shift+F1..F10** (F11..F20 in GFA-Basic and STOS, issue #18):
+  MEGA + F1/F3/F5/F7/F9 for Shift+F1/F3/F5/F7/F9, MEGA + Shift + F1..F9 for Shift+F2..F10.
+
+**The menu has three new lines:** copy the new 102 byte `/atarist/stcfg` from the zip to the SD
+card. The old 99 byte file is reported as corrupt and the settings are not saved. The 1536 byte
+`/atarist/stmount` of 0.4.12 to 0.4.14 stays valid.
+
+Known limitations: the right button of an Atari mouse releases slowly, and a mouSTer in Atari mode
+may need `activepotlines=true` in its settings (pin 9 has no pull-up on the MEGA65, issue #17); a
+tester saw some programs crash with 8 MB of ST RAM on an STe (4 MB works); the R4 and R5 builds are
+not tested on hardware yet.
+
 Version 0.4.14 beta - October 10, 2026
 ======================================
 
