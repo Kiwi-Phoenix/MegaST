@@ -335,12 +335,14 @@ begin
    mouse_pot_x <= pot2_x_i when st_joy_swap_i = '1' else pot1_x_i;
    mouse_pot_y <= pot2_y_i when st_joy_swap_i = '1' else pot1_y_i;
 
-   -- An open pin 9 reads as pressed, too (no pull-up): see rmb_guard.vhd
+   -- An open pin 9 reads as pressed, too (no pull-up): see rmb_guard.vhd. The Atari mouse does not pull
+   -- pin 9 up after a release, so with mouse type Atari a right click only lasts 200 ms (click mode)
    i_rmb_guard : entity work.rmb_guard
       generic map (G_CLK_SPEED => CORE_CLK_SPEED)
       port map (
          clk_i    => clk_main_i,
          disarm_i => st_joy_swap_i xor rmb_swap,
+         click_i  => not st_amigamouse_i and not st_mouse1351_i,
          pin_i    => not mouse_pot_x(7),
          rmb_o    => mouse_rmb
       ); -- i_rmb_guard

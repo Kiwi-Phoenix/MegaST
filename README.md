@@ -14,9 +14,10 @@ on the MEGA65. Please report problems and successes in the
 [issues](https://github.com/freemchr/MegaST/issues).
 
 **Latest version: [1.0](https://github.com/freemchr/MegaST/releases/tag/v1.0)**
-(October 11, 2026), the first stable version: the HDMI picture is centred in 576p, 720x480 and
-640x480, "Remember floppies" and "Remember TOS/cartridge" in the menu, and MEGA + F1..F9 for
-F11..F20 (issue #18). The core remembers the mounted disk images and the chosen TOS and cartridge
+(October 12, 2026), the first stable version: the HDMI picture is centred in 576p, 720x480 and
+640x480, "Remember floppies" and "Remember TOS/cartridge" in the menu, MEGA + F1..F9 for
+F11..F20 (issue #18), and the right button of an Atari mouse no longer blocks GEM for 10 seconds
+(issue #17). The core remembers the mounted disk images and the chosen TOS and cartridge
 (copy `atarist/stmount` from the zip, issue #13). Core files for the R3/R3A, R4, R5 and R6.
 **Copy the new `atarist/stcfg` (102 bytes) from the zip**, otherwise the menu settings are not
 saved. **All versions up to 0.4.10 damage hard disk images when writing** (issue #11): if you
@@ -38,7 +39,9 @@ Tested on a MEGA65 R6
 | Hard disk: writing files | broken up to 0.4.10, works since 0.4.11 (tester report, issue #11) |
 | Remembered disk images restored at power-on | broken in 0.4.12/0.4.13, works since 0.4.14 (tester reports, issues #11, #12) |
 | MEGA65 keyboard, all keys (A fixed in 0.4.7), numeric keypad via MEGA | works |
-| Atari ST mouse, Amiga mouse (optical, incl. right button), in port 1 or port 2 | works |
+| Atari ST mouse, in port 1 or port 2 | works; right button as a short click only (see Usage, issue #17) |
+| Amiga mouse (optical, incl. right button), in port 1 or port 2 | works |
+| mouSTer USB adapter, firmware 3.23.5313, Amiga or 1351 mode (see Usage) | works (tester report, issue #17) |
 | Joystick, with debouncing for bouncing and worn switches (Suncom TAC-2) | works |
 | Menu settings saved on the SD card (`stcfg`) | works |
 | VGA scanlines, full borders | works |
@@ -79,7 +82,7 @@ Features
 * Real IKBD (HD6301) with the MEGA65 keyboard mapped directly into the ST keyboard matrix,
   numeric keypad via the MEGA key
 * Mega ST real time clock (RP5C15), set from the MEGA65's real time clock
-* Atari ST mouse (or a mouSTer in Atari mode), Amiga mouse or Commodore 1351 mouse in MEGA65
+* Atari ST mouse, Amiga mouse, Commodore 1351 mouse or mouSTer USB adapter in MEGA65
   joystick port 1 or 2 (menu "Controllers & ports"), joystick in the other port, STe enhanced
   joystick ports (fire button only)
 * Cubase 2 and Cubase 3 dongle in the cartridge port
@@ -164,9 +167,25 @@ Usage
   steps. "Mouse port" selects the MEGA65 port the mouse is plugged into (default: port 1); the
   joystick goes into the other port. The right button is read from pin 9, which has no pull-up on
   the MEGA65, so an open pin looks like a pressed button. The core therefore ignores the right
-  button until it has seen pin 9 released (an Atari or Amiga mouse pulls it up). An adapter that
-  leaves pin 9 open (or a joystick in the mouse port) gets no right button, but it no longer holds
-  it down.
+  button until it has seen pin 9 released. An adapter that leaves pin 9 open (or a joystick in the
+  mouse port) gets no right button, but it no longer holds it down.
+* **Right button of an Atari ST mouse:** the Atari mouse does not pull pin 9 up either (on the ST
+  the mainboard does). Its button only grounds the pin, and after a release the open line takes
+  about 10-13 seconds to float back up (measured on an R6; 2-6 seconds on a tester's board). The
+  core can not see the release, so with Mouse type = Atari a right click counts as a **short click
+  (200 ms)**: right-click menus work, but holding the right button (dragging, drawing) does not,
+  and a second right click only counts once the line has floated back up (about 10 seconds later).
+* **mouSTer (USB mouse adapter):** the mouSTer emulates a real mouse so closely that its right
+  button has the same pull-up problem: it sticks after the first click. With mouSTer firmware
+  **3.23.5313 or newer**, these two setups work (tester report, issue #17):
+
+  | Core "Mouse type" | mouSTer INI                                                  |
+  |-------------------|--------------------------------------------------------------|
+  | Amiga             | `[mouster] mode=auto` (or `mouse`), `[mouse] type=amiga`, `activepotlines=true` |
+  | 1351              | `[mouster] mode=mouse`, `[mouse] type=c1351`, `activepotlines=false` |
+
+  With `activepotlines=true` the mouSTer drives the right button line itself (the same setting
+  the MEGA65 Amiga core needs).
 
 Using disk images
 -----------------

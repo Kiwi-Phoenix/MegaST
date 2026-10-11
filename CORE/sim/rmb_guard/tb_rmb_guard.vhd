@@ -8,6 +8,7 @@ end entity tb_rmb_guard;
 architecture sim of tb_rmb_guard is
    signal clk    : std_logic := '0';
    signal disarm : std_logic := '0';
+   signal click  : std_logic := '0';
    signal pin    : std_logic := '1';     -- open pin: reads pressed
    signal rmb    : std_logic;
    signal done   : boolean := false;
@@ -22,8 +23,8 @@ begin
    clk <= not clk after 500 us when not done;
 
    i_dut : entity work.rmb_guard
-      generic map (G_CLK_SPEED => 1000, G_ARM_MS => 50, G_DISARM_MS => 10_000)
-      port map (clk_i => clk, disarm_i => disarm, pin_i => pin, rmb_o => rmb);
+      generic map (G_CLK_SPEED => 1000, G_ARM_MS => 50, G_DISARM_MS => 10_000, G_CLICK_MS => 200)
+      port map (clk_i => clk, disarm_i => disarm, click_i => click, pin_i => pin, rmb_o => rmb);
 
    test : process
    begin
@@ -64,6 +65,41 @@ begin
       disarm <= '1'; wait_ms(1, clk); disarm <= '0';
       pin <= '1'; wait_ms(2, clk);
       assert rmb = '0' report "not disarmed by port change" severity failure;
+
+      -- click mode (Atari mouse): pin 9 stays low for seconds after a release, so a press lasts 200 ms
+      click <= '1';
+      pin <= '0'; wait_ms(60, clk);
+      pin <= '1'; wait for 1 ns;
+      assert rmb = '1' report "click mode: press not passed" severity failure;
+      wait_ms(150, clk);
+      assert rmb = '1' report "click mode: click shorter than 200 ms" severity failure;
+      wait_ms(60, clk);
+      assert rmb = '0' report "click mode: click longer than 200 ms" severity failure;
+      -- the line floats up after 12 s: no second click in between, but the next press passes
+      wait_ms(12_000, clk);
+      assert rmb = '0' report "click mode: button came back while pin 9 low" severity failure;
+      pin <= '0'; wait_ms(60, clk);
+      pin <= '1'; wait for 1 ns;
+      assert rmb = '1' report "click mode: second click lost" severity failure;
+      wait_ms(210, clk);
+      assert rmb = '0' report "click mode: second click not ended" severity failure;
+      -- a release during the click ends it at once
+      pin <= '0'; wait_ms(60, clk);
+      pin <= '1'; wait_ms(50, clk);
+      pin <= '0'; wait for 1 ns;
+      assert rmb = '0' report "click mode: release not passed" severity failure;
+      -- open pin (mouSTer without activepotlines) in click mode: still never pressed
+      pin <= '1';
+      disarm <= '1'; wait_ms(1, clk); disarm <= '0';
+      for i in 1 to 2_000 loop
+         wait until rising_edge(clk);
+         assert rmb = '0' report "click mode: open pin 9 reads as right button" severity failure;
+      end loop;
+      -- back to level mode: holding works again
+      click <= '0';
+      pin <= '0'; wait_ms(60, clk);
+      pin <= '1'; wait_ms(500, clk);
+      assert rmb = '1' report "level mode: held button dropped after click mode" severity failure;
 
       report "rmb_guard: all tests passed";
       done <= true;

@@ -22,7 +22,7 @@ How the port works
 | `CORE/verilog/viking_scale.sv` | 2:1 downscaler for the Viking card (1280x1024 @ 96 MHz to 640x512 @ 32 MHz) |
 | `CORE/verilog/rp5c15_m65.sv` | Mega ST real time clock (RP5C15), fed by the MEGA65 RTC |
 | `CORE/vhdl/floppy_swap.vhd` | Swapping the floppy drives A: and B: (the FDC's image geometry is announced again) |
-| `CORE/vhdl/rmb_guard.vhd` | Right mouse button on pin 9: ignored until the pin was seen released (no pull-up on the MEGA65, an open pin reads as pressed) |
+| `CORE/vhdl/rmb_guard.vhd` | Right mouse button on pin 9: ignored until the pin was seen released (no pull-up on the MEGA65, an open pin reads as pressed); click mode for the Atari mouse (a press counts 200 ms, the release is not visible) |
 | `CORE/vhdl/mouse1351.vhd` | Commodore 1351 mouse to the IKBD's PS/2 mouse emulation |
 | `CORE/vhdl/fdc_bridge.vhd` | Connects the M2M virtual drives (8 bit) to the ST's FDC and ACSI controller (16 bit MiSTer "WIDE" interface) |
 | `CORE/vhdl/mega65.vhd` | Glue: clocks, menu settings, TOS loader, floppy buffers in HyperRAM, virtual drives |

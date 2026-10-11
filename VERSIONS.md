@@ -1,4 +1,4 @@
-Version 1.0 - October 11, 2026
+Version 1.0 - October 12, 2026
 ==============================
 
 The first stable version. Since the first beta (0.4.6) the floppy and hard disk images, the
@@ -14,15 +14,22 @@ testers on R6 and R3A boards. New in 1.0:
   `tos.img` is used). Hard disks are always remembered.
 * **MEGA + F1..F9 gives Shift+F1..F10** (F11..F20 in GFA-Basic and STOS, issue #18):
   MEGA + F1/F3/F5/F7/F9 for Shift+F1/F3/F5/F7/F9, MEGA + Shift + F1..F9 for Shift+F2..F10.
+* **Right button of the Atari mouse (issue #17):** after a right click GEM saw the button held
+  for 10 seconds and ignored left clicks meanwhile. Measured on an R6: the Atari mouse only grounds
+  pin 9, and without the ST's pull-up the line takes 10-13 seconds to float back up after a release.
+  With Mouse type = Atari a right click now counts as a short click (200 ms). Right-click menus work;
+  holding the right button does not, and a second right click only counts about 10 seconds later.
 
 **The menu has three new lines:** copy the new 102 byte `/atarist/stcfg` from the zip to the SD
 card. The old 99 byte file is reported as corrupt and the settings are not saved. The 1536 byte
 `/atarist/stmount` of 0.4.12 to 0.4.14 stays valid.
 
-Known limitations: the right button of an Atari mouse releases slowly, and a mouSTer in Atari mode
-may need `activepotlines=true` in its settings (pin 9 has no pull-up on the MEGA65, issue #17); a
-tester saw some programs crash with 8 MB of ST RAM on an STe (4 MB works); the R4 and R5 builds are
-not tested on hardware yet.
+A mouSTer (firmware 3.23.5313 or newer) works with the right button in Amiga mode with
+`activepotlines=true` or in 1351 mode (tester report, issue #17); the README has the INI settings.
+
+Known limitations: the right button of an Atari mouse is a short click only and works about once
+every 10 seconds (pin 9 has no pull-up on the MEGA65, issue #17); a tester saw some programs crash
+with 8 MB of ST RAM on an STe (4 MB works); the R4 and R5 builds are not tested on hardware yet.
 
 Version 0.4.14 beta - October 10, 2026
 ======================================
