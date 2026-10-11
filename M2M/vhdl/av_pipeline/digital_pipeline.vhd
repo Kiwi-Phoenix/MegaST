@@ -301,7 +301,9 @@ begin
 
          INTER     => false,        -- Not needed: Progressive input only
          HEADER    => false,        -- Not needed: Used on MiSTer to read the sampled image back from the ARM side to do screenshots. The header provides informations such as image size.
-         DOWNSCALE => false,        -- Not needed: We use ascal only to upscale
+         -- MegaST: the ST line (744 pixels, 840 with full borders) is wider than the 4:3 area of the 576p,
+         -- 720x480 and 640x480 modes; without downscaling, ascal cuts off the right part of the line
+         DOWNSCALE => true,
          DOWNSCALE_NN => true,      -- Not needed: true = remove logic
          BYTESWAP  => true,
          ADAPTIVE  => true,         -- Needed for advanced scanlines emulation in polyphase mode

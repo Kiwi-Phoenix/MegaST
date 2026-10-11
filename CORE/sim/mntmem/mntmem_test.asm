@@ -9,6 +9,8 @@
 ;
 ; EXPECT_ON=1: /atarist/stmount is valid (all 0x00 or all 0xFF): full test
 ; EXPECT_ON=0: the file is missing or has the wrong size: feature off
+; The menu items Remember floppies / Remember TOS/cartridge come from TEST_CFM
+; (bit 0 / bit 1), see the _MNT_CFM_GET stub: the emulator has no M2M$CFM_DATA.
 ;
 ; This machine is based on AtariST_MiSTer
 ; Powered by MiSTer2MEGA65
@@ -16,6 +18,7 @@
 ; ****************************************************************************
 
 #define RELEASE
+#define MNT_CFM_STUB
 #include "../../../M2M/rom/main.asm"
 
 VDRIVES_MAX     .EQU    4                       ; like globals.asm of MegaST
@@ -23,12 +26,17 @@ CRTROM_MAN_MAX  .EQU    2
 MNT_ENTRIES     .EQU    6
 MNT_BUF_SIZE    .EQU    1536
 LOG_PATH_SZ     .EQU    64
+MNT_OPT_FD      .EQU    41                      ; menu items (any numbers)
+MNT_OPT_ROM     .EQU    42
+MNT_FD_NUM      .EQU    2                       ; vdrives 0 and 1: floppies
 
 START_FIRMWARE  MOVE    STR_START, R8
                 SYSCALL(puts, 1)
 
                 MOVE    FAILS, R0
                 MOVE    0, @R0
+                MOVE    TEST_CFM, R0            ; remember floppies and ROMs
+                MOVE    3, @R0
                 MOVE    VDRIVES_NUM, R0
                 MOVE    4, @R0
                 MOVE    CRTROM_MAN_NUM, R0
@@ -366,6 +374,66 @@ START_FIRMWARE  MOVE    STR_START, R8
                 MOVE    T_FORGOTTEN, R10
                 RSUB    CHECK_EQ, 1
 
+                ; ------------------------------------------------------------
+                ; Menu items Remember floppies / Remember TOS/cartridge
+                ; ------------------------------------------------------------
+
+                MOVE    P_GAMES, R8             ; floppy in vdrive 0 again
+                RSUB    FBP_SET, 1
+                XOR     R8, R8
+                XOR     R9, R9
+                MOVE    N_DISK1, R10
+                RSUB    MNT_REMEMBER, 1
+                RSUB    MNT_SAVE, 1
+
+                MOVE    TEST_CFM, R0            ; floppies off
+                MOVE    2, @R0
+                RSUB    CLEAR_LOG, 1
+                RSUB    MNT_RESTORE, 1
+                MOVE    LOADS, R8               ; TOS and vdrive 2
+                MOVE    @R8, R8
+                MOVE    2, R9
+                MOVE    T_FD_OFF, R10
+                RSUB    CHECK_EQ, 1
+                MOVE    LOG_PATHS, R8
+                ADD     LOG_PATH_SZ, R8
+                MOVE    F_LONG, R9
+                MOVE    T_FD_OFF_HD, R10
+                RSUB    CHECK_STR, 1
+                MOVE    MNT_PATHS, R8           ; the floppy is still known
+                MOVE    F_DISK1, R9
+                MOVE    T_FD_OFF_KEPT, R10
+                RSUB    CHECK_STR, 1
+
+                MOVE    TEST_CFM, R0            ; TOS/cartridge off
+                MOVE    1, @R0
+                RSUB    CLEAR_LOG, 1
+                RSUB    MNT_RESTORE, 1
+                MOVE    LOADS, R8               ; vdrive 0 and 2
+                MOVE    @R8, R8
+                MOVE    2, R9
+                MOVE    T_ROM_OFF, R10
+                RSUB    CHECK_EQ, 1
+                MOVE    LOG_PATHS, R8
+                MOVE    F_DISK1, R9
+                MOVE    T_ROM_OFF_FD, R10
+                RSUB    CHECK_STR, 1
+                MOVE    MNT_PATHS, R8           ; the TOS is still known
+                ADD     1280, R8
+                MOVE    F_TOS, R9
+                MOVE    T_ROM_OFF_KEPT, R10
+                RSUB    CHECK_STR, 1
+
+                MOVE    TEST_CFM, R0            ; both on: all three
+                MOVE    3, @R0
+                RSUB    CLEAR_LOG, 1
+                RSUB    MNT_RESTORE, 1
+                MOVE    LOADS, R8
+                MOVE    @R8, R8
+                MOVE    3, R9
+                MOVE    T_BOTH_ON, R10
+                RSUB    CHECK_EQ, 1
+
                 MOVE    LONGBUF, R8             ; path unknown: entry empty
                 RSUB    FBP_SET, 1
                 MOVE    P_TEN, R8
@@ -681,6 +749,29 @@ T_MISSING_KEPT  .ASCII_W "missing image kept"
 T_FORGOTTEN     .ASCII_W "unmounted image forgotten"
 T_UNKNOWN_REM   .ASCII_W "unknown browser path: entry empty"
 T_REM_TOO_LONG  .ASCII_W "path + name too long: entry empty"
+T_FD_OFF        .ASCII_W "remember floppies off: 2 images"
+T_FD_OFF_HD     .ASCII_W "remember floppies off: hard disk loaded"
+T_FD_OFF_KEPT   .ASCII_W "remember floppies off: floppy path kept"
+T_ROM_OFF       .ASCII_W "remember TOS off: 2 images"
+T_ROM_OFF_FD    .ASCII_W "remember TOS off: floppy loaded first"
+T_ROM_OFF_KEPT  .ASCII_W "remember TOS off: TOS path kept"
+T_BOTH_ON       .ASCII_W "remember both on: 3 images"
+
+; Stub of _MNT_CFM_GET (mntmem.asm): menu item R8 from TEST_CFM
+_MNT_CFM_GET    INCRB
+                MOVE    TEST_CFM, R0
+                MOVE    @R0, R0
+                CMP     MNT_OPT_FD, R8
+                RBRA    _TCG_1, !Z
+                AND     1, R0                   ; bit 0: floppies
+                RBRA    _TCG_2, 1
+_TCG_1          AND     2, R0                   ; bit 1: TOS/cartridge
+_TCG_2          XOR     R8, R8
+                CMP     0, R0
+                RBRA    _TCG_RET, Z
+                MOVE    1, R8
+_TCG_RET        DECRB
+                RET
 
 #include "../../../M2M/rom/mntmem.asm"
 
@@ -709,6 +800,7 @@ FH_IMG4         .BLOCK  FAT32$FDH_STRUCT_SIZE
 FH_IMG5         .BLOCK  FAT32$FDH_STRUCT_SIZE
 
 FAILS           .BLOCK  1
+TEST_CFM        .BLOCK  1
 LOADS           .BLOCK  1
 LOG_ID          .BLOCK  8
 LOG_MODE        .BLOCK  8

@@ -114,6 +114,9 @@ constant C_VD_BUFFER          : vd_buf_array := (  C_DEV_ST_VD0_BUF,
                                                    C_VD_NOBUFFER,
                                                    C_VD_NOBUFFER,
                                                    x"EEEE");                           -- Always finish the array using x"EEEE"
+-- MegaST: the first C_MNT_FD_NUM drives are the floppies; menu "Remember floppies" decides whether they are
+-- mounted again at the next start (M2M/rom/mntmem.asm)
+constant C_MNT_FD_NUM         : natural := 2;
 
 ----------------------------------------------------------------------------------------------------------
 -- System for handling simulated cartridges and ROM loaders
