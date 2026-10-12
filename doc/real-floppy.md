@@ -2,7 +2,7 @@
 
 Status (2026-10-12): phase 0 implemented: `CORE/vhdl/floppy/m65_floppy_port.vhd` (layer 1, read only),
 `CORE/vhdl/floppy/floppy_probe.vhd`, the pins routed to the core, the JTAG probe `tools/probe4.tcl` and the GHDL
-test `CORE/sim/real_floppy/run.sh`. Next: the hardware session of phase 0. Feature request: issue #15.
+test `CORE/sim/real_floppy/run.sh`. Phase 0 hardware session done (results in section 1). Next: phase 2 (WF1772IP). Feature request: issue #15.
 
 The goal is two things: drive A: of MegaST on the MEGA65's internal 3.5" drive, and a set of building blocks
 that other MiSTer2MEGA65 cores (C64 1581, Amiga, Amstrad CPC, Spectrum +3, BBC Master, SAM Coupé, MSX, PC)
@@ -23,7 +23,20 @@ can reuse.
   (5 Hz), `f_track0_i`, `f_writeprotect_i`, `f_diskchanged_i` (PC pin 34 = DSKCHG, not READY: it goes active
   when the disk is removed and clears only on a step pulse while the drive is selected).
 
-Still to check on the hardware (phase 0): pulse widths and glitches on RDATA, the WPT level with no disk inserted
+**Phase 0 results (2026-10-12, R6, internal drive, Amiga DD formatted disk, `tools/probe4.tcl`):**
+* Without a disk: select works, DSKCHG active, no index. 90 steps out reached TRK00 after about 88 steps.
+* With the disk: 300.2 - 300.8 rpm. The flux is clean: track 0 side 0 about 40,000 transitions per revolution, 99.95 %
+  in the 4/6/8 us bins, about 15 outside (the write splice). Track 0 side 1, track 40 side 0 and track 79 side 1 are as
+  clean. Side select works.
+* DSKCHG clears after one step with a disk inserted (PC behaviour, as expected).
+* WPT reads inactive with the write-protect tab closed.
+* `f_density` left at `'1'` worked for a DD read.
+* The motor watchdog (30 s without a step) also trips between two probe calls when Vivado takes long to start:
+  `probe4.tcl` takes several commands (`CMD="00A500 00A513"`, motor off first re-arms it).
+
+Still to check: WPT with the tab open, WPT/DSKCHG when the disk is ejected while selected, an HD disk.
+
+Open before phase 0 (kept for reference): pulse widths and glitches on RDATA, the WPT level with no disk inserted
 (TOS detects a disk change from the write-protect line), whether `f_density` matters for DD disks, the minimum
 step pulse width the drive accepts, and the drive's power-up behaviour.
 
