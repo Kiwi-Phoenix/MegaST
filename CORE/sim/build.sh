@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Verilator simulation of the Atari ST machine (atarist_m65.sv) with a behavioral SDRAM model.
 #
-# Needs Verilator 5 (e.g. from the OSS CAD Suite: https://github.com/YosysHQ/oss-cad-suite-build).
+# Needs Verilator 5 and GHDL with synthesis (e.g. both from the OSS CAD Suite:
+# https://github.com/YosysHQ/oss-cad-suite-build).
 #
 # Usage:
 #    ./build.sh                     (VFLAGS=-DACSI_TRACE ./build.sh: trace the ACSI transfers,
@@ -26,7 +27,11 @@ rm -rf rtl_sim && mkdir -p rtl_sim
 cp -r $C/AtariST_MiSTer $C/verilog rtl_sim/
 grep -rl 'ifn\?def VERILATOR' rtl_sim | xargs sed -i 's/`ifdef VERILATOR/`ifdef VERILATOR_UPSTREAM_SIM/; s/`ifndef VERILATOR/`ifndef VERILATOR_UPSTREAM_SIM/'
 R=rtl_sim/AtariST_MiSTer/rtl
-FILES="rtl_sim/verilog/atarist_m65.sv rtl_sim/verilog/sdram_m65.v rtl_sim/verilog/cegen_m65.v
+# WF1772IP (VHDL) for Verilator: the clock enable version converted to Verilog by GHDL
+ghdl --synth --std=08 -fsynopsys -frelaxed --out=verilog \
+  $(for f in pkg am_detector control crc_logic digital_pll registers transceiver top_soc; do
+      echo $C/vhdl/floppy/wf1772ip/wf1772ip_$f.vhd; done) -e WF1772IP_TOP_SOC > rtl_sim/wf1772ip.v
+FILES="rtl_sim/wf1772ip.v rtl_sim/verilog/wd1772_m65.v rtl_sim/verilog/atarist_m65.sv rtl_sim/verilog/sdram_m65.v rtl_sim/verilog/cegen_m65.v
   rtl_sim/verilog/bram_m65.v rtl_sim/verilog/acsi_ctrl.sv rtl_sim/verilog/viking_scale.sv rtl_sim/verilog/rp5c15_m65.sv $R/viking.v $R/cubase2_dongle.v $R/cubase3_dongle.v
   $R/fx68k/fx68k.sv $R/fx68k/fx68kAlu.sv $R/fx68k/uaddrPla.sv
   $R/gstmcu/gstmcu.v $R/gstmcu/gstshifter.v $R/gstmcu/clockgen.v $R/gstmcu/latch.v $R/gstmcu/mcucontrol.v

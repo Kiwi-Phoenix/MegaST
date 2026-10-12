@@ -8,6 +8,112 @@
 #include <string>
 
 static Vtb_top* top;
+
+// Flux level model of the MEGA65's internal floppy drive with an .st image (RFLOPPY=<file>):
+// builds the MFM bit cells of the track under the head (ST format: gap, 12 x 00, 3 x A1 sync, ID mark FE,
+// track, side, sector, size, CRC, gap, 3 x A1, data mark FB, 512 bytes, CRC, gap) and sends one RDATA
+// pulse (0.4 us) per flux transition, 2 us per bit cell; 300 rpm, index pulse at the start of the track.
+// Call step() once per 32 MHz cycle.
+struct RealDrive {
+    std::vector<uint8_t> img;
+    int spt = 9, sides = 2, tracks = 80;
+    int head = 0, trk = -1, sd = -1;
+    bool wp = false, old_step = false, old_motor = false;
+    std::vector<uint8_t> cells;                     // one byte per bit cell
+    uint64_t rev = 0;                               // 32 MHz cycles since the index
+    int64_t last_cell = -1;
+    int pulse = 0;
+    uint64_t revs = 0, steps = 0;
+    static const int TRACK_BYTES = 6250;            // 200 ms at 250 kbit/s
+    static const uint64_t REV = (uint64_t)TRACK_BYTES * 16 * 385 / 6;   // 2 us = 385/6 cycles of 32.083 MHz
+
+    void load(const std::vector<uint8_t>& d) {
+        img = d;
+        int bspt = d[24] | (d[25] << 8), bsides = d[26] | (d[27] << 8), total = d[19] | (d[20] << 8);
+        if (bspt >= 8 && bspt <= 10 && (bsides == 1 || bsides == 2) && total > 0) {
+            spt = bspt; sides = bsides; tracks = total / (spt * sides);
+        } else {                                    // no BPB: guess from the size
+            sides = d.size() > 500000 ? 2 : 1;
+            spt = (d.size() / 512 / sides) % 80 == 0 ? (int)(d.size() / 512 / sides / 80) : 9;
+            tracks = d.size() / 512 / sides / spt;
+        }
+        printf("real floppy: %zu bytes, %d tracks, %d sides, %d sectors\n", d.size(), tracks, sides, spt);
+    }
+    void crc_byte(uint16_t& c, uint8_t b) {
+        for (int k = 7; k >= 0; k--) {
+            bool x = ((c >> 15) ^ (b >> k)) & 1;
+            c <<= 1;
+            if (x) c ^= 0x1021;
+        }
+    }
+    void put(uint8_t b, bool& last, uint16_t& c) {
+        for (int k = 7; k >= 0; k--) {
+            bool d = (b >> k) & 1;
+            cells.push_back(!last && !d);
+            cells.push_back(d);
+            last = d;
+        }
+        crc_byte(c, b);
+    }
+    void sync(bool& last, uint16_t& c) {
+        for (int k = 15; k >= 0; k--) cells.push_back((0x4489 >> k) & 1);
+        last = true;
+        crc_byte(c, 0xa1);
+    }
+    void build(int t, int s) {
+        cells.clear();
+        bool last = false; uint16_t c = 0xffff;
+        if (t < tracks && s < sides) {
+            for (int k = 0; k < 60; k++) put(0x4e, last, c);
+            for (int sec = 1; sec <= spt; sec++) {
+                for (int k = 0; k < 12; k++) put(0x00, last, c);
+                c = 0xffff;
+                for (int k = 0; k < 3; k++) sync(last, c);
+                put(0xfe, last, c); put(t, last, c); put(s, last, c); put(sec, last, c); put(2, last, c);
+                uint16_t crc = c; put(crc >> 8, last, c); put(crc & 0xff, last, c);
+                for (int k = 0; k < 22; k++) put(0x4e, last, c);
+                for (int k = 0; k < 12; k++) put(0x00, last, c);
+                c = 0xffff;
+                for (int k = 0; k < 3; k++) sync(last, c);
+                put(0xfb, last, c);
+                size_t o = ((size_t)(t * sides + s) * spt + sec - 1) * 512;
+                for (int i = 0; i < 512; i++) put(o + i < img.size() ? img[o + i] : 0, last, c);
+                crc = c; put(crc >> 8, last, c); put(crc & 0xff, last, c);
+                for (int k = 0; k < 40; k++) put(0x4e, last, c);
+            }
+        }
+        while (cells.size() < (size_t)TRACK_BYTES * 16) put(0x4e, last, c);   // unformatted track: gap only
+        cells.resize((size_t)TRACK_BYTES * 16);
+        trk = t; sd = s;
+    }
+    // inputs active high; outputs rdata, index, track0, wprot
+    void step(bool sel, bool motor, bool side, bool dir_in, bool stp, int frame,
+              bool& rdata, bool& index, bool& track0, bool& wprot) {
+        if (stp && !old_step && sel) {
+            if (dir_in && head < 83) head++;
+            else if (!dir_in && head > 0) head--;
+            steps++;
+        }
+        old_step = stp;
+        if (motor != old_motor) printf("real floppy: motor %s at frame %d, head %d\n", motor ? "on" : "off", frame, head);
+        old_motor = motor;
+        int s = side && sides == 2 ? 1 : (side ? 1 : 0);
+        if (motor) {
+            if (++rev >= REV) { rev = 0; revs++; last_cell = -1; }
+            if (head != trk || s != sd) build(head, s);
+            int64_t cell = (int64_t)(rev * 6 / 385);
+            if (cell != last_cell) {
+                last_cell = cell;
+                if (cell < (int64_t)cells.size() && cells[cell] && sel) pulse = 13;
+            }
+        }
+        if (pulse) pulse--;
+        rdata  = pulse > 0;
+        index  = motor && sel && rev < 64167;        // 2 ms
+        track0 = sel && head == 0;
+        wprot  = sel && wp;
+    }
+};
 static uint64_t ticks = 0;   // one tick = half a 96 MHz period
 
 // clk_96: toggles every tick; clk_32: every 3 ticks; clk_2: every 48 ticks (all rise at tick 0)
@@ -51,6 +157,20 @@ int main(int argc, char** argv) {
         printf("floppy image: %zu bytes\n", fd.size());
     }
 
+    // RFLOPPY=<.st image>: drive A is the internal floppy drive (cfg_real_floppy, flux level drive model);
+    // RFLOPPY_WP=1: write protected
+    RealDrive rd;
+    const char* rf_name = getenv("RFLOPPY");
+    if (rf_name) {
+        FILE* h = fopen(rf_name, "rb");
+        if (!h) { perror("real floppy"); return 1; }
+        fseek(h, 0, SEEK_END); std::vector<uint8_t> d(ftell(h)); fseek(h, 0, SEEK_SET);
+        if (fread(d.data(), 1, d.size(), h) != d.size()) return 1;
+        fclose(h);
+        rd.load(d);
+        rd.wp = getenv("RFLOPPY_WP") != nullptr;
+    }
+
     FILE* f = fopen(tos_name, "rb");
     if (!f) { perror("tos"); return 1; }
     std::vector<uint8_t> tos(1024 * 1024);
@@ -65,6 +185,7 @@ int main(int argc, char** argv) {
     top->cfg_mono = getenv("MONO") != nullptr;   // MONO=1: SM124 monochrome monitor (71 Hz)
     top->cfg_mde60 = getenv("MONO60") != nullptr; // MONO60=1: mono 60 Hz mode
     top->cfg_full_brd = getenv("BORDER") != nullptr; // BORDER=1: full borders
+    top->cfg_real_floppy = rf_name != nullptr;
     int dump_from = getenv("DUMP_FROM") ? atoi(getenv("DUMP_FROM")) : -1;   // write every frame from this one on
     top->dio_download = 1; top->dio_strobe = 0; top->tos192k_in = 0;
     for (int i = 0; i < 4; i++) top->kbd_matrix[i] = 0xffffffff;
@@ -156,6 +277,13 @@ int main(int argc, char** argv) {
             top->joy_mouse = mouse_amiga ? ((a << 1) | (b << 3)) : ((a << 1) | b);
             mouse_phase = (mouse_phase + 1) & 3;
             mouse_next = ticks + 6 * 64000;   // 2 ms at 32 MHz
+        }
+
+        if (rf_name) {
+            bool rdata, index, track0, wprot;
+            rd.step(top->rfd_sel_a, top->rfd_motor, top->rfd_side, top->rfd_dir_in, top->rfd_step, frame,
+                    rdata, index, track0, wprot);
+            top->rfd_rdata = rdata; top->rfd_index = index; top->rfd_track0 = track0; top->rfd_wprot = wprot;
         }
 
         // floppy A: mount while running (FLOPPY_AT), serve reads like the M2M firmware
@@ -250,6 +378,9 @@ int main(int argc, char** argv) {
                    (unsigned long long)hd_reads, (unsigned long long)hd_writes,
                    top->dbg_acsi_sel, top->dbg_acsi_busy, top->dbg_acsi_state, top->dbg_hd_present,
                    top->dbg_acsi_irq, top->dbg_acsi_din, top->dbg_dma_mode, top->dbg_gpip);
+            if (rf_name) printf("frame %d real floppy: head %d side %d, revolutions %llu, steps %llu, sel %d motor %d\n",
+                                frame, rd.head, rd.sd, (unsigned long long)rd.revs, (unsigned long long)rd.steps,
+                                top->rfd_sel_a, top->rfd_motor);
             printf("frame %d timing: %d lines, %.2f Hz, active pixels %d..%d after hsync\n", frame, lines,
                    6 * 32.083333e6 / (double)(ticks - vs_ticks), hfirst, hlast);
             fflush(stdout);

@@ -62,6 +62,7 @@ module atarist_m65
 	input         cfg_ste_pads,    // STe enhanced joystick ports instead of the ST joystick ports
 	input         cfg_cubase,      // Cubase 2/3 dongle in the cartridge port
 	input         cfg_crop,        // blank the border: only the graphics area is active (HDMI zoom-in)
+	input         cfg_real_floppy, // drive A: is the MEGA65's internal floppy drive (wd1772_m65.v)
 
 	// MEGA65 real time clock (M2M format, see rp5c15_m65.sv)
 	input  [64:0] rtc,
@@ -143,6 +144,19 @@ module atarist_m65
 
 	output        floppy_led,
 	output        hd_led,
+
+	// MEGA65 internal floppy drive (cfg_real_floppy), all active high, see m65_floppy_port.vhd
+	output        rfd_sel_a,
+	output        rfd_motor,
+	output        rfd_side,        // 1 = side 1
+	output        rfd_dir_in,      // 1 = step in
+	output        rfd_step,
+	output        rfd_wgate,
+	output        rfd_wdata,
+	input         rfd_rdata,       // filtered RDATA level (high while a flux pulse is seen)
+	input         rfd_index,
+	input         rfd_track0,
+	input         rfd_wprot,
 
 	// SDRAM
 	output        sdram_clk,
@@ -1103,6 +1117,39 @@ wire       fdc_rw;
 wire [7:0] fdc_din;
 wire [7:0] fdc_dout;
 
+// MEGA65: with cfg_real_floppy all FDC accesses go to the WD1772 of the internal drive (drive A:), and
+// the image controller below is idle. Drive B: is then absent, like on an ST with one drive.
+wire       img_fdc_irq, img_fdc_drq, rfd_irq, rfd_drq;
+wire [7:0] img_fdc_dout, rfd_dout;
+assign fdc_irq  = cfg_real_floppy ? rfd_irq  : img_fdc_irq;
+assign fdc_drq  = cfg_real_floppy ? rfd_drq  : img_fdc_drq;
+assign fdc_dout = cfg_real_floppy ? rfd_dout : img_fdc_dout;
+
+wd1772_m65 wd1772_m65 (
+	.clk_32   ( clk_32                        ),
+	.reset    ( peripheral_reset | ~cfg_real_floppy ),
+	.cpu_sel  ( fdc_sel & cfg_real_floppy     ),
+	.cpu_addr ( fdc_addr                      ),
+	.cpu_rw   ( fdc_rw                        ),
+	.cpu_din  ( fdc_din                       ),
+	.cpu_dout ( rfd_dout                      ),
+	.irq      ( rfd_irq                       ),
+	.drq      ( rfd_drq                       ),
+	.motor    ( rfd_motor                     ),
+	.step     ( rfd_step                      ),
+	.dir_in   ( rfd_dir_in                    ),
+	.wgate    ( rfd_wgate                     ),
+	.wdata    ( rfd_wdata                     ),
+	.rdata    ( rfd_rdata                     ),
+	.index    ( rfd_index                     ),
+	.track0   ( rfd_track0                    ),
+	.wprot    ( rfd_wprot                     )
+);
+
+// PSG port A: drive select and side are low active
+assign rfd_sel_a = cfg_real_floppy & ~floppy_sel[0];
+assign rfd_side  = ~floppy_side;
+
 // Some broken software selects both drives at the same time. On real hardware this
 // only works if no second drive is present. In our setup the second drive is present
 // but we can simply map all such broken accesses to drive A only
@@ -1121,14 +1168,14 @@ fdc1772 #(.IMG_TYPE(1)) fdc1772 (
 	.floppy_ready   (                  ),
 
 	// interrupts
-	.irq            ( fdc_irq          ),
-	.drq            ( fdc_drq          ),
+	.irq            ( img_fdc_irq      ),
+	.drq            ( img_fdc_drq      ),
 
 	.cpu_addr       ( fdc_addr         ),
-	.cpu_sel        ( fdc_sel          ),
+	.cpu_sel        ( fdc_sel & ~cfg_real_floppy ),
 	.cpu_rw         ( fdc_rw           ),
 	.cpu_din        ( fdc_din          ),
-	.cpu_dout       ( fdc_dout         ),
+	.cpu_dout       ( img_fdc_dout     ),
 
 	// place any signals that need to be passed up to the top after here.
 	.img_mounted    ( img_mounted      ), // signaling that new image has been mounted

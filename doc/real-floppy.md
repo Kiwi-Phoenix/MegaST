@@ -4,8 +4,11 @@ Status (2026-10-12): phase 0 implemented: `CORE/vhdl/floppy/m65_floppy_port.vhd`
 `CORE/vhdl/floppy/floppy_probe.vhd`, the pins routed to the core, the JTAG probe `tools/probe4.tcl` and the GHDL
 test `CORE/sim/real_floppy/run.sh`. Phase 0 hardware session done (results in section 1). Phase 2: WF1772IP imported and converted to a clock enable
 (`CORE/vhdl/floppy/wf1772ip/`, `tools/wf1772_ce.py`), proven identical to the original at 16 MHz by
-`CORE/sim/real_floppy/run_wf1772.sh` (VHDL flux drive model `floppy_model.vhd`). Next: the wrapper (short DMA
-selects must be stretched over at least one `CE` edge) and phase 3. Feature request: issue #15.
+`CORE/sim/real_floppy/run_wf1772.sh` (VHDL flux drive model `floppy_model.vhd`). Phase 3 (simulation): `wd1772_m65.v`
+wrapper, menu item "Real floppy drive as A:" (line 40, `OPTM_SIZE` 103), drive pins driven by the core or the probe
+(`mega65.vhd`). Verilator with the C++ flux drive model (`RFLOPPY=redboot.st`): TOS 1.04 detects drive B: as absent
+(two restores, seek error), seeks and verifies drive A:, reads the boot sector by DMA (512 DRQs, status 80) and runs it
+(red screen at frame 219). Next: hardware test on the R6 (read only). Feature request: issue #15.
 
 The goal is two things: drive A: of MegaST on the MEGA65's internal 3.5" drive, and a set of building blocks
 that other MiSTer2MEGA65 cores (C64 1581, Amiga, Amstrad CPC, Spectrum +3, BBC Master, SAM Coupé, MSX, PC)

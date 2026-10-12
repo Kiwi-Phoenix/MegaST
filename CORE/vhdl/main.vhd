@@ -47,6 +47,7 @@ entity main is
       st_fdc_wp_i             : in  std_logic_vector(1 downto 0);
       st_fd_swap_i            : in  std_logic;              -- swap floppy drives A: and B:
       st_crop_i               : in  std_logic;              -- only the graphics area is visible (no border)
+      st_real_floppy_i        : in  std_logic;              -- drive A: is the internal floppy drive
       st_joy_swap_i           : in  std_logic;              -- mouse in MEGA65 port 2, joystick in port 1
       st_viking_i             : in  std_logic;
       st_ste_pads_i           : in  std_logic;
@@ -85,6 +86,19 @@ entity main is
       sd_buff_wr_i            : in  std_logic;
       floppy_led_o            : out std_logic;
       hd_led_o                : out std_logic;
+
+      -- internal floppy drive (st_real_floppy_i), all active high, see floppy/m65_floppy_port.vhd
+      rfd_sel_a_o             : out std_logic;
+      rfd_motor_o             : out std_logic;
+      rfd_side_o              : out std_logic;
+      rfd_dir_in_o            : out std_logic;
+      rfd_step_o              : out std_logic;
+      rfd_wgate_o             : out std_logic;
+      rfd_wdata_o             : out std_logic;
+      rfd_rdata_i             : in  std_logic;
+      rfd_index_i             : in  std_logic;
+      rfd_track0_i            : in  std_logic;
+      rfd_wprot_i             : in  std_logic;
 
       -- Video output
       video_ce_o              : out std_logic;
@@ -175,6 +189,7 @@ component atarist_m65 is
       cfg_ste_pads    : in    std_logic;
       cfg_cubase      : in    std_logic;
       cfg_crop        : in    std_logic;
+      cfg_real_floppy : in    std_logic;
       rtc             : in    std_logic_vector(64 downto 0);
 
       dio_download    : in    std_logic;
@@ -239,6 +254,17 @@ component atarist_m65 is
 
       floppy_led      : out   std_logic;
       hd_led          : out   std_logic;
+      rfd_sel_a       : out   std_logic;
+      rfd_motor       : out   std_logic;
+      rfd_side        : out   std_logic;
+      rfd_dir_in      : out   std_logic;
+      rfd_step        : out   std_logic;
+      rfd_wgate       : out   std_logic;
+      rfd_wdata       : out   std_logic;
+      rfd_rdata       : in    std_logic;
+      rfd_index       : in    std_logic;
+      rfd_track0      : in    std_logic;
+      rfd_wprot       : in    std_logic;
 
       sdram_clk       : out   std_logic;
       sdram_cke       : out   std_logic;
@@ -450,6 +476,7 @@ begin
          cfg_ste_pads    => st_ste_pads_i,
          cfg_cubase      => st_cubase_i,
          cfg_crop        => st_crop_i,
+         cfg_real_floppy => st_real_floppy_i,
          rtc             => rtc_i,
 
          -- the TOS image is only written while the core is held in reset
@@ -515,6 +542,17 @@ begin
 
          floppy_led      => floppy_led_o,
          hd_led          => hd_led_o,
+         rfd_sel_a       => rfd_sel_a_o,
+         rfd_motor       => rfd_motor_o,
+         rfd_side        => rfd_side_o,
+         rfd_dir_in      => rfd_dir_in_o,
+         rfd_step        => rfd_step_o,
+         rfd_wgate       => rfd_wgate_o,
+         rfd_wdata       => rfd_wdata_o,
+         rfd_rdata       => rfd_rdata_i,
+         rfd_index       => rfd_index_i,
+         rfd_track0      => rfd_track0_i,
+         rfd_wprot       => rfd_wprot_i,
 
          sdram_clk       => sdram_clk_o,
          sdram_cke       => sdram_cke_o,

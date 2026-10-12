@@ -286,8 +286,11 @@ signal kp_snap      : std_logic_vector(175 downto 0);
 signal kp_sr        : std_logic_vector(175 downto 0);
 signal kp_capture, kp_sel, kp_shift, kp_tck, kp_tdi : std_logic;
 
--- Internal floppy drive, phase 0 of doc/real-floppy.md: driven by the JTAG probe only (USER4, see below)
+-- Internal floppy drive: driven by the core (menu "Real floppy drive as A:") or by the JTAG probe (USER4)
 signal fd_sel_a, fd_sel_b, fd_motor, fd_side, fd_dir_in, fd_step, fd_density : std_logic;
+signal fp_sel_a, fp_sel_b, fp_motor, fp_side, fp_dir_in, fp_step, fp_density : std_logic;
+signal main_rfd_sel_a, main_rfd_motor, main_rfd_side, main_rfd_dir_in, main_rfd_step : std_logic;
+signal main_rfd_wgate, main_rfd_wdata, main_realfd : std_logic;
 signal fd_flux, fd_rdata, fd_index, fd_track0, fd_wprot, fd_dskchg, fd_step_busy, fd_motor_on : std_logic;
 signal fp_snap      : std_logic_vector(223 downto 0);
 signal fp_sr        : std_logic_vector(223 downto 0);
@@ -340,30 +343,31 @@ constant C_MENU_VIKING         : natural := 36;
 constant C_MENU_STEREO         : natural := 37;
 constant C_MENU_WPROT          : natural := 38;
 constant C_MENU_FDSWAP         : natural := 39;
-constant C_MENU_AMIGAMOUSE     : natural := 50;   -- mouse type: 49 Atari (default), 50 Amiga, 51 1351
-constant C_MENU_MOUSE1351      : natural := 51;
-constant C_MENU_JOYSWAP        : natural := 55;   -- mouse port: 54 port 1 (default), 55 port 2
-constant C_MENU_STEPADS        : natural := 57;
-constant C_MENU_PMOD           : natural := 58;
-constant C_MENU_CUBASE         : natural := 59;
-constant C_MENU_KBD_US         : natural := 63;   -- keyboard: 62 positional (default), 63 as printed US, 64 UK
-constant C_MENU_KBD_UK         : natural := 64;
-constant C_MENU_HDMI_16_9_50   : natural := 70;
-constant C_MENU_HDMI_16_9_60   : natural := 71;
-constant C_MENU_HDMI_4_3_50    : natural := 72;
-constant C_MENU_HDMI_5_4_50    : natural := 73;
-constant C_MENU_HDMI_640_60    : natural := 74;
-constant C_MENU_HDMI_720_5994  : natural := 75;
-constant C_MENU_SVGA_800_60    : natural := 76;
-constant C_MENU_HDMI_DVI       : natural := 78;
-constant C_MENU_VGA_15KHZ      : natural := 85;
-constant C_MENU_VGA_CSYNC      : natural := 86;
-constant C_MENU_SCANLINES_25   : natural := 89;
-constant C_MENU_SCANLINES_50   : natural := 90;
-constant C_MENU_SCANLINES_75   : natural := 91;
-constant C_MENU_CRT_EMULATION  : natural := 94;
-constant C_MENU_HDMI_ZOOM      : natural := 95;
-constant C_MENU_IMPROVE_AUDIO  : natural := 96;
+constant C_MENU_REALFD         : natural := 40;
+constant C_MENU_AMIGAMOUSE     : natural := 51;   -- mouse type: 50 Atari (default), 51 Amiga, 52 1351
+constant C_MENU_MOUSE1351      : natural := 52;
+constant C_MENU_JOYSWAP        : natural := 56;   -- mouse port: 55 port 1 (default), 56 port 2
+constant C_MENU_STEPADS        : natural := 58;
+constant C_MENU_PMOD           : natural := 59;
+constant C_MENU_CUBASE         : natural := 60;
+constant C_MENU_KBD_US         : natural := 64;   -- keyboard: 63 positional (default), 64 as printed US, 65 UK
+constant C_MENU_KBD_UK         : natural := 65;
+constant C_MENU_HDMI_16_9_50   : natural := 71;
+constant C_MENU_HDMI_16_9_60   : natural := 72;
+constant C_MENU_HDMI_4_3_50    : natural := 73;
+constant C_MENU_HDMI_5_4_50    : natural := 74;
+constant C_MENU_HDMI_640_60    : natural := 75;
+constant C_MENU_HDMI_720_5994  : natural := 76;
+constant C_MENU_SVGA_800_60    : natural := 77;
+constant C_MENU_HDMI_DVI       : natural := 79;
+constant C_MENU_VGA_15KHZ      : natural := 86;
+constant C_MENU_VGA_CSYNC      : natural := 87;
+constant C_MENU_SCANLINES_25   : natural := 90;
+constant C_MENU_SCANLINES_50   : natural := 91;
+constant C_MENU_SCANLINES_75   : natural := 92;
+constant C_MENU_CRT_EMULATION  : natural := 95;
+constant C_MENU_HDMI_ZOOM      : natural := 96;
+constant C_MENU_IMPROVE_AUDIO  : natural := 97;
 -- 98 "Reset Atari ST" is handled by the firmware (OSM_SEL_POST in m2m-rom.asm)
 
 ---------------------------------------------------------------------------------------------
@@ -592,6 +596,7 @@ begin
          st_fdc_wp_i          => (others => main_osm_control_i(C_MENU_WPROT)),
          st_fd_swap_i         => main_osm_control_i(C_MENU_FDSWAP),
          st_crop_i            => main_osm_control_i(C_MENU_HDMI_ZOOM),
+         st_real_floppy_i     => main_realfd,
          st_joy_swap_i        => main_osm_control_i(C_MENU_JOYSWAP),
          st_viking_i          => main_osm_control_i(C_MENU_VIKING),
          st_ste_pads_i        => main_osm_control_i(C_MENU_STEPADS),
@@ -627,6 +632,17 @@ begin
          sd_buff_wr_i         => main_sd_buff_wr,
          floppy_led_o         => main_floppy_led,
          hd_led_o             => main_hd_led,
+         rfd_sel_a_o          => main_rfd_sel_a,
+         rfd_motor_o          => main_rfd_motor,
+         rfd_side_o           => main_rfd_side,
+         rfd_dir_in_o         => main_rfd_dir_in,
+         rfd_step_o           => main_rfd_step,
+         rfd_wgate_o          => main_rfd_wgate,
+         rfd_wdata_o          => main_rfd_wdata,
+         rfd_rdata_i          => fd_rdata,
+         rfd_index_i          => fd_index,
+         rfd_track0_i         => fd_track0,
+         rfd_wprot_i          => fd_wprot,
 
          -- Video output
          video_ce_o           => video_ce_o,
@@ -1192,6 +1208,16 @@ begin
    -- Internal 3.5" floppy drive (phase 0 of doc/real-floppy.md: bring-up probe, no controller yet)
    ---------------------------------------------------------------------------------------------
 
+   -- the core drives the floppy drive when the menu says so, otherwise the JTAG probe does
+   main_realfd <= main_osm_control_i(C_MENU_REALFD);
+   fd_sel_a    <= main_rfd_sel_a  when main_realfd = '1' else fp_sel_a;
+   fd_sel_b    <= '0'             when main_realfd = '1' else fp_sel_b;
+   fd_motor    <= main_rfd_motor  when main_realfd = '1' else fp_motor;
+   fd_side     <= main_rfd_side   when main_realfd = '1' else fp_side;
+   fd_dir_in   <= main_rfd_dir_in when main_realfd = '1' else fp_dir_in;
+   fd_step     <= main_rfd_step   when main_realfd = '1' else fp_step;
+   fd_density  <= '1'             when main_realfd = '1' else fp_density;
+
    i_floppy_port : entity work.m65_floppy_port
       generic map (
          G_CLK_HZ       => CORE_CLK_SPEED,
@@ -1206,8 +1232,8 @@ begin
          side_i           => fd_side,
          dir_in_i         => fd_dir_in,
          step_i           => fd_step,
-         wgate_i          => '0',
-         wdata_i          => '0',
+         wgate_i          => main_rfd_wgate and main_realfd,
+         wdata_i          => main_rfd_wdata,
          write_allow_i    => '0',
          density_i        => fd_density,
          flux_o           => fd_flux,
@@ -1246,13 +1272,13 @@ begin
          cmd_i       => fp_cmd_tck,          -- stable when fp_cmd_valid pulses (see fp_cdc)
          cmd_valid_i => fp_cmd_valid,
          snap_o      => fp_snap,
-         sel_a_o     => fd_sel_a,
-         sel_b_o     => fd_sel_b,
-         motor_o     => fd_motor,
-         side_o      => fd_side,
-         dir_in_o    => fd_dir_in,
-         step_o      => fd_step,
-         density_o   => fd_density,
+         sel_a_o     => fp_sel_a,
+         sel_b_o     => fp_sel_b,
+         motor_o     => fp_motor,
+         side_o      => fp_side,
+         dir_in_o    => fp_dir_in,
+         step_o      => fp_step,
+         density_o   => fp_density,
          flux_i      => fd_flux,
          rdata_i     => fd_rdata,
          index_i     => fd_index,

@@ -21,6 +21,9 @@ module tb_top (
   input         cfg_mono,      // 1 = SM124 monochrome monitor
   input         cfg_mde60,     // 1 = mono 60 Hz mode
   input         cfg_full_brd,  // 1 = full borders (menu "Full borders")
+  input         cfg_real_floppy, // 1 = drive A is the internal floppy drive (RFLOPPY=, drive model in tb.cpp)
+  output        rfd_sel_a, rfd_motor, rfd_side, rfd_dir_in, rfd_step, rfd_wgate,
+  input         rfd_rdata, rfd_index, rfd_track0, rfd_wprot,
   // hard disk 0 (the testbench emulates the M2M firmware / vdrives)
   input   [1:0] fd_img_mounted,
   output [31:0] fd_sd_lba,
@@ -67,6 +70,22 @@ module tb_top (
   always @(posedge clk_32) begin
     kbd_rx_d <= dut.kbd_acia.serial_rx_data_available;
     if (dut.kbd_acia.serial_rx_data_available & ~kbd_rx_d) $display("IKBD byte %h", dut.kbd_acia.serial_rx_data);
+  end
+`endif
+`ifdef FDC_TRACE
+  // trace the FDC register accesses of the real floppy controller (wd1772_m65.v), build with VFLAGS=-DFDC_TRACE
+  reg fdc_sel_d, rfd_drq_d, rfd_irq_d; integer fdc_n = 0, drq_n = 0;
+  always @(posedge clk_32) begin
+    fdc_sel_d <= dut.fdc_sel;
+    rfd_drq_d <= dut.rfd_drq;
+    rfd_irq_d <= dut.rfd_irq;
+    if (dut.rfd_drq & ~rfd_drq_d) drq_n <= drq_n + 1;
+    if (dut.fdc_sel & ~fdc_sel_d & ~dut.dma.fdc_dma_sel & fdc_n < 400) begin
+      fdc_n <= fdc_n + 1;
+      if (dut.fdc_rw) $display("FDC read  reg %0d = %02x (drq so far %0d)", dut.fdc_addr, dut.fdc_dout, drq_n);
+      else            $display("FDC write reg %0d = %02x", dut.fdc_addr, dut.fdc_din);
+    end
+    if (dut.rfd_irq & ~rfd_irq_d) $display("FDC INTRQ (drq so far %0d)", drq_n);
   end
 `endif
 `ifdef RTC_TRACE
@@ -143,6 +162,9 @@ module tb_top (
     .video_hblank(video_hblank), .video_vblank(video_vblank), .video_ce(video_ce), .video_31khz(video_mono),
     .audio_l(audio_l), .audio_r(),
     .floppy_led(), .hd_led(),
+    .cfg_real_floppy(cfg_real_floppy), .rfd_sel_a(rfd_sel_a), .rfd_motor(rfd_motor), .rfd_side(rfd_side),
+    .rfd_dir_in(rfd_dir_in), .rfd_step(rfd_step), .rfd_wgate(rfd_wgate), .rfd_wdata(),
+    .rfd_rdata(rfd_rdata), .rfd_index(rfd_index), .rfd_track0(rfd_track0), .rfd_wprot(rfd_wprot),
     .sdram_clk(sdram_clk), .sdram_cke(sdram_cke), .sdram_ras_n(sdram_ras_n), .sdram_cas_n(sdram_cas_n),
     .sdram_we_n(sdram_we_n), .sdram_cs_n(sdram_cs_n), .sdram_ba(sdram_ba), .sdram_a(sdram_a),
     .sdram_dqml(sdram_dqml), .sdram_dqmh(sdram_dqmh), .sdram_dq(sdram_dq)

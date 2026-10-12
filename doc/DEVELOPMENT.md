@@ -24,7 +24,8 @@ How the port works
 | `CORE/vhdl/floppy_swap.vhd` | Swapping the floppy drives A: and B: (the FDC's image geometry is announced again) |
 | `CORE/vhdl/floppy/m65_floppy_port.vhd` | Internal 3.5" floppy drive: owns the 15 drive pins, synchronisers, RDATA glitch filter and flux pulse, step pulse stretcher, write interlock (`G_WRITE_ENABLE`), motor watchdog. Reusable by other M2M cores |
 | `CORE/vhdl/floppy/floppy_probe.vhd` | Bring-up probe for the floppy drive (phase 0 of `doc/real-floppy.md`): motor/select/step commands and index, flux and step statistics through JTAG USER4 (`tools/probe4.tcl`) |
-| `CORE/vhdl/floppy/wf1772ip/` | WF1772IP, a complete WD1772 (Suska, LGPL), converted to a clock enable by `tools/wf1772_ce.py` (origin and known differences in its `README.md`); `orig/` is the unmodified source. Not in the build yet |
+| `CORE/verilog/wd1772_m65.v` | WD1772 for the internal floppy drive: WF1772IP behind the fdc1772 CPU interface, clock enable at half rate, short DMA selects stretched over two enabled edges. `atarist_m65.sv` routes all FDC accesses to it with the menu item "Real floppy drive as A:" (drive B: is then absent) |
+| `CORE/vhdl/floppy/wf1772ip/` | WF1772IP, a complete WD1772 (Suska, LGPL), converted to a clock enable by `tools/wf1772_ce.py` (origin and known differences in its `README.md`); `orig/` is the unmodified source. Used by `wd1772_m65.v`; `CORE/sim/build.sh` converts it to Verilog with `ghdl --synth` for Verilator |
 | `CORE/vhdl/rmb_guard.vhd` | Right mouse button on pin 9: ignored until the pin was seen released (no pull-up on the MEGA65, an open pin reads as pressed); click mode for the Atari mouse (a press counts 200 ms, the release is not visible) |
 | `CORE/vhdl/mouse1351.vhd` | Commodore 1351 mouse to the IKBD's PS/2 mouse emulation |
 | `CORE/vhdl/fdc_bridge.vhd` | Connects the M2M virtual drives (8 bit) to the ST's FDC and ACSI controller (16 bit MiSTer "WIDE" interface) |
@@ -81,7 +82,8 @@ simulation):
 
 * `CORE/sim/build.sh`: Verilator simulation of the whole Atari ST machine (`atarist_m65.sv`) with
   an SDRAM model; boots TOS 1.04, 2.06 and EmuTOS, ACSI hard disk, `CROP=1` for zoom-in,
-  `VFLAGS=-DRTC_TRACE` traces the real time clock
+  `VFLAGS=-DRTC_TRACE` traces the real time clock, `RFLOPPY=<.st>` boots from a flux level model of the
+  internal floppy drive through `wd1772_m65.v` (`VFLAGS=-DFDC_TRACE` logs every FDC access)
 * `CORE/sim/tos_loader/run.sh`, `CORE/sim/keyboard/run.sh`, `CORE/sim/floppy_swap/run.sh`,
   `CORE/sim/fdc_bridge/run.sh`, `CORE/sim/rmb_guard/run.sh`, `CORE/sim/real_floppy/run.sh`: GHDL tests of the TOS/cartridge loader,
   the keyboard (numeric keypad, "Keyboard as printed"), the floppy swap (and eject at a firmware
