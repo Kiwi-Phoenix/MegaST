@@ -87,6 +87,6 @@ Simulate first. Every hardware round trip costs the maintainer time.
 ## Releases
 
 The version is in `config.vhd` (welcome and help texts), `VERSIONS.md` and the README. The `.cor`
-comes from `bit2core mega65r6 <bit> "Atari ST" <version> <file>` (`mega65r3`/`r4`/`r5` for the other
+comes from `bit2core mega65r6 <bit> "MegaST" <version> <file>` (`mega65r3`/`r4`/`r5` for the other
 boards). The release zip holds the `.cor`, `README.txt` and `atarist/` (EmuTOS `tos.img` plus its
 license files, `stcfg`). Posting releases or issue comments needs the maintainer's OK.
