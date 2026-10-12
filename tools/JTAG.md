@@ -13,4 +13,13 @@ licence refuses debug-core insertion). Run them with
 | `probe2.tcl` + `decode2.py` | Joystick ports, mouse menu settings, pots and edge counters (USER2, 96 bits, `CORE/vhdl/mega65.vhd`) |
 | `probe3.tcl` + `decode3.py` | Keyboard: the ST keyboard matrix from `keyboard.vhd`, the last 4 bytes the CPU read from the keyboard ACIA and press counters for the MEGA65 keys A/S and the ST key A (USER3, 176 bits, `CORE/vhdl/mega65.vhd`) |
 
+| `probe4.tcl` + `decode4.py` | Internal floppy drive (USER4, 224 bits, `CORE/vhdl/floppy/floppy_probe.vhd`): sends an optional command `$CMD`, then reads index period (rpm), flux transitions per revolution, a histogram of the flux intervals, TRK00/WPT/DSKCHG and step counters |
+
+Floppy probe commands (`CMD`, hex): bits 15..8 must be `A5`. Bit 0 motor, 1 select A, 2 side 1,
+3 direction in, 4 clear the counters, 5 density pin low, 6 select B; bits 23..16 = number of step pulses
+(6 ms apart). Examples: `00A503` motor on and drive A selected, `05A50B` 5 steps in, `05A503` 5 steps out,
+`00A507` side 1, `00A500` everything off. The write lines are never driven (`G_WRITE_ENABLE` false), and
+the motor stops by itself after 30 s without a step. Example:
+`CMD=00A513 N=8 vivado -mode batch -nojournal -nolog -source tools/probe4.tcl | tee f.txt; tools/decode4.py f.txt`
+
 `redboot.st` (repo root, not committed): a 360 KB test disk whose boot sector turns the background red.

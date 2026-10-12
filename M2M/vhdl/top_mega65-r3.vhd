@@ -474,18 +474,8 @@ begin
    eth_reset_o   <= '1';
    eth_txd_o     <= (others => '0');
    eth_txen_o    <= '0';
-   f_density_o   <= '1';
-   f_motora_o    <= '1';
-   f_motorb_o    <= '1';
-   f_selecta_o   <= '1';
-   f_selectb_o   <= '1';
-   f_side1_o     <= '1';
-   f_stepdir_o   <= '1';
-   f_step_o      <= '1';
-   f_wdata_o     <= '1';
-   f_wgate_o     <= '1';
    led_o         <= '0'; -- Off
-   -- Atari ST for MEGA65: the PMOD headers are driven by the core (see CORE port map below)
+   -- Atari ST for MEGA65: the PMOD headers and the floppy drive are driven by the core (see CORE port map below)
    qspidb_io     <= (others => 'Z');
    qspicsn_o     <= '1';
 
@@ -908,7 +898,24 @@ begin
          p2lo_io           => p2lo_io,
          p2hi_io           => p2hi_io,
          pmod1_en_o        => open,
-         pmod2_en_o        => open
+         pmod2_en_o        => open,
+
+         -- MegaST: internal floppy drive (see doc/m2m/exceptions.md)
+         f_density_o       => f_density_o,
+         f_motora_o        => f_motora_o,
+         f_motorb_o        => f_motorb_o,
+         f_selecta_o       => f_selecta_o,
+         f_selectb_o       => f_selectb_o,
+         f_side1_o         => f_side1_o,
+         f_stepdir_o       => f_stepdir_o,
+         f_step_o          => f_step_o,
+         f_wdata_o         => f_wdata_o,
+         f_wgate_o         => f_wgate_o,
+         f_diskchanged_i   => f_diskchanged_i,
+         f_index_i         => f_index_i,
+         f_rdata_i         => f_rdata_i,
+         f_track0_i        => f_track0_i,
+         f_writeprotect_i  => f_writeprotect_i
       ); -- CORE
 
 end architecture synthesis;

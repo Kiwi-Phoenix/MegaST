@@ -242,7 +242,24 @@ port (
    p2lo_io                 : inout std_logic_vector(3 downto 0);
    p2hi_io                 : inout std_logic_vector(3 downto 0);
    pmod1_en_o              : out   std_logic;
-   pmod2_en_o              : out   std_logic
+   pmod2_en_o              : out   std_logic;
+
+   -- Internal 3.5" floppy drive (all active low, see floppy/m65_floppy_port.vhd)
+   f_density_o             : out   std_logic;
+   f_motora_o              : out   std_logic;
+   f_motorb_o              : out   std_logic;
+   f_selecta_o             : out   std_logic;
+   f_selectb_o             : out   std_logic;
+   f_side1_o               : out   std_logic;
+   f_stepdir_o             : out   std_logic;
+   f_step_o                : out   std_logic;
+   f_wdata_o               : out   std_logic;
+   f_wgate_o               : out   std_logic;
+   f_diskchanged_i         : in    std_logic;
+   f_index_i               : in    std_logic;
+   f_rdata_i               : in    std_logic;
+   f_track0_i              : in    std_logic;
+   f_writeprotect_i        : in    std_logic
 );
 end entity MEGA65_Core;
 
@@ -268,6 +285,19 @@ signal kp_kbd_bytes : std_logic_vector(31 downto 0);
 signal kp_snap      : std_logic_vector(175 downto 0);
 signal kp_sr        : std_logic_vector(175 downto 0);
 signal kp_capture, kp_sel, kp_shift, kp_tck, kp_tdi : std_logic;
+
+-- Internal floppy drive, phase 0 of doc/real-floppy.md: driven by the JTAG probe only (USER4, see below)
+signal fd_sel_a, fd_sel_b, fd_motor, fd_side, fd_dir_in, fd_step, fd_density : std_logic;
+signal fd_flux, fd_rdata, fd_index, fd_track0, fd_wprot, fd_dskchg, fd_step_busy, fd_motor_on : std_logic;
+signal fp_snap      : std_logic_vector(223 downto 0);
+signal fp_sr        : std_logic_vector(223 downto 0);
+signal fp_cmd_tck   : std_logic_vector(23 downto 0) := (others => '0');
+signal fp_tog_tck   : std_logic := '0';
+signal fp_tog_sync  : std_logic_vector(2 downto 0) := (others => '0');
+signal fp_cmd_valid : std_logic := '0';
+signal fp_capture, fp_sel, fp_shift, fp_update, fp_tck, fp_tdi : std_logic;
+attribute ASYNC_REG : string;
+attribute ASYNC_REG of fp_tog_sync : signal is "TRUE";
 
 ---------------------------------------------------------------------------------------------
 -- Clocks and active high reset signals for each clock domain
@@ -1157,5 +1187,124 @@ begin
          end if;
       end if;
    end process kp_shiftreg;
+
+   ---------------------------------------------------------------------------------------------
+   -- Internal 3.5" floppy drive (phase 0 of doc/real-floppy.md: bring-up probe, no controller yet)
+   ---------------------------------------------------------------------------------------------
+
+   i_floppy_port : entity work.m65_floppy_port
+      generic map (
+         G_CLK_HZ       => CORE_CLK_SPEED,
+         G_WRITE_ENABLE => false             -- read only: the write lines stay inactive
+      )
+      port map (
+         clk_i            => main_clk,
+         rst_i            => main_rst,
+         sel_a_i          => fd_sel_a,
+         sel_b_i          => fd_sel_b,
+         motor_i          => fd_motor,
+         side_i           => fd_side,
+         dir_in_i         => fd_dir_in,
+         step_i           => fd_step,
+         wgate_i          => '0',
+         wdata_i          => '0',
+         write_allow_i    => '0',
+         density_i        => fd_density,
+         flux_o           => fd_flux,
+         rdata_o          => fd_rdata,
+         index_o          => fd_index,
+         track0_o         => fd_track0,
+         wprot_o          => fd_wprot,
+         dskchg_o         => fd_dskchg,
+         step_busy_o      => fd_step_busy,
+         motor_on_o       => fd_motor_on,
+         wgate_on_o       => open,
+         f_density_o      => f_density_o,
+         f_motora_o       => f_motora_o,
+         f_motorb_o       => f_motorb_o,
+         f_selecta_o      => f_selecta_o,
+         f_selectb_o      => f_selectb_o,
+         f_side1_o        => f_side1_o,
+         f_stepdir_o      => f_stepdir_o,
+         f_step_o         => f_step_o,
+         f_wdata_o        => f_wdata_o,
+         f_wgate_o        => f_wgate_o,
+         f_diskchanged_i  => f_diskchanged_i,
+         f_index_i        => f_index_i,
+         f_rdata_i        => f_rdata_i,
+         f_track0_i       => f_track0_i,
+         f_writeprotect_i => f_writeprotect_i
+      ); -- i_floppy_port
+
+   i_floppy_probe : entity work.floppy_probe
+      generic map (
+         G_CLK_HZ => CORE_CLK_SPEED
+      )
+      port map (
+         clk_i       => main_clk,
+         rst_i       => main_rst,
+         cmd_i       => fp_cmd_tck,          -- stable when fp_cmd_valid pulses (see fp_cdc)
+         cmd_valid_i => fp_cmd_valid,
+         snap_o      => fp_snap,
+         sel_a_o     => fd_sel_a,
+         sel_b_o     => fd_sel_b,
+         motor_o     => fd_motor,
+         side_o      => fd_side,
+         dir_in_o    => fd_dir_in,
+         step_o      => fd_step,
+         density_o   => fd_density,
+         flux_i      => fd_flux,
+         rdata_i     => fd_rdata,
+         index_i     => fd_index,
+         track0_i    => fd_track0,
+         wprot_i     => fd_wprot,
+         dskchg_i    => fd_dskchg,
+         step_busy_i => fd_step_busy,
+         motor_on_i  => fd_motor_on
+      ); -- i_floppy_probe
+
+   -- JTAG probe of the floppy drive: JTAG instruction USER4 (0x23), then a 224 bit data register scan
+   -- (LSB first) returns the snapshot of floppy_probe.vhd. The bits shifted in are taken as a command when
+   -- bits 15..8 are 0xA5 (a read scan shifts in zeros), see tools/probe4.tcl.
+   fp_bscan : BSCANE2
+      generic map (
+         JTAG_CHAIN => 4
+      )
+      port map (
+         CAPTURE => fp_capture,
+         DRCK    => open,
+         RESET   => open,
+         RUNTEST => open,
+         SEL     => fp_sel,
+         SHIFT   => fp_shift,
+         TCK     => fp_tck,
+         TDI     => fp_tdi,
+         TMS     => open,
+         UPDATE  => fp_update,
+         TDO     => fp_sr(0)
+      );
+
+   fp_shiftreg : process (fp_tck)
+   begin
+      if rising_edge(fp_tck) then
+         if fp_sel = '1' and fp_capture = '1' then
+            fp_sr <= fp_snap;
+         elsif fp_sel = '1' and fp_shift = '1' then
+            fp_sr <= fp_tdi & fp_sr(223 downto 1);
+         elsif fp_sel = '1' and fp_update = '1' and fp_sr(15 downto 8) = x"A5" then
+            fp_cmd_tck <= fp_sr(23 downto 0);
+            fp_tog_tck <= not fp_tog_tck;
+         end if;
+      end if;
+   end process fp_shiftreg;
+
+   -- fp_cmd_tck changes only with fp_tog_tck, many main_clk cycles before the toggle arrives here
+   fp_cdc : process (main_clk)
+   begin
+      if rising_edge(main_clk) then
+         fp_tog_sync  <= fp_tog_sync(1 downto 0) & fp_tog_tck;
+         fp_cmd_valid <= fp_tog_sync(2) xor fp_tog_sync(1);
+      end if;
+   end process fp_cdc;
 
 end architecture synthesis;

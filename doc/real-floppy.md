@@ -1,6 +1,8 @@
 # Blueprint: the MEGA65's internal floppy drive in M2M cores
 
-Status: plan, nothing implemented yet (2026-10-08). Feature request: issue #15.
+Status (2026-10-12): phase 0 implemented: `CORE/vhdl/floppy/m65_floppy_port.vhd` (layer 1, read only),
+`CORE/vhdl/floppy/floppy_probe.vhd`, the pins routed to the core, the JTAG probe `tools/probe4.tcl` and the GHDL
+test `CORE/sim/real_floppy/run.sh`. Next: the hardware session of phase 0. Feature request: issue #15.
 
 The goal is two things: drive A: of MegaST on the MEGA65's internal 3.5" drive, and a set of building blocks
 that other MiSTer2MEGA65 cores (C64 1581, Amiga, Amstrad CPC, Spectrum +3, BBC Master, SAM Coupé, MSX, PC)

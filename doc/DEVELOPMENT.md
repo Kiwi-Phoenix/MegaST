@@ -22,6 +22,8 @@ How the port works
 | `CORE/verilog/viking_scale.sv` | 2:1 downscaler for the Viking card (1280x1024 @ 96 MHz to 640x512 @ 32 MHz) |
 | `CORE/verilog/rp5c15_m65.sv` | Mega ST real time clock (RP5C15), fed by the MEGA65 RTC |
 | `CORE/vhdl/floppy_swap.vhd` | Swapping the floppy drives A: and B: (the FDC's image geometry is announced again) |
+| `CORE/vhdl/floppy/m65_floppy_port.vhd` | Internal 3.5" floppy drive: owns the 15 drive pins, synchronisers, RDATA glitch filter and flux pulse, step pulse stretcher, write interlock (`G_WRITE_ENABLE`), motor watchdog. Reusable by other M2M cores |
+| `CORE/vhdl/floppy/floppy_probe.vhd` | Bring-up probe for the floppy drive (phase 0 of `doc/real-floppy.md`): motor/select/step commands and index, flux and step statistics through JTAG USER4 (`tools/probe4.tcl`) |
 | `CORE/vhdl/rmb_guard.vhd` | Right mouse button on pin 9: ignored until the pin was seen released (no pull-up on the MEGA65, an open pin reads as pressed); click mode for the Atari mouse (a press counts 200 ms, the release is not visible) |
 | `CORE/vhdl/mouse1351.vhd` | Commodore 1351 mouse to the IKBD's PS/2 mouse emulation |
 | `CORE/vhdl/fdc_bridge.vhd` | Connects the M2M virtual drives (8 bit) to the ST's FDC and ACSI controller (16 bit MiSTer "WIDE" interface) |
@@ -80,10 +82,12 @@ simulation):
   an SDRAM model; boots TOS 1.04, 2.06 and EmuTOS, ACSI hard disk, `CROP=1` for zoom-in,
   `VFLAGS=-DRTC_TRACE` traces the real time clock
 * `CORE/sim/tos_loader/run.sh`, `CORE/sim/keyboard/run.sh`, `CORE/sim/floppy_swap/run.sh`,
-  `CORE/sim/fdc_bridge/run.sh`, `CORE/sim/rmb_guard/run.sh`: GHDL tests of the TOS/cartridge loader,
+  `CORE/sim/fdc_bridge/run.sh`, `CORE/sim/rmb_guard/run.sh`, `CORE/sim/real_floppy/run.sh`: GHDL tests of the TOS/cartridge loader,
   the keyboard (numeric keypad, "Keyboard as printed"), the floppy swap (and eject at a firmware
   restart), the sector buffer read-back of `fdc_bridge.vhd` (every drive returns its own buffer; the
-  Verilator simulation bypasses it) and the right mouse button guard
+  Verilator simulation bypasses it), the right mouse button guard and the internal floppy drive port
+  and probe (with a simple drive model: step timing, index period, flux histogram, glitch filter, write
+  interlock, motor watchdog)
 * `CORE/sim/fastseek/run.sh`: the fast seek of the firmware in the QNICE emulator (FAT32 image
   with fragmented files, compared with the FAT32 library)
 * `CORE/sim/mntmem/run.sh`: remembering the mounted images (`M2M/rom/mntmem.asm`) in the QNICE

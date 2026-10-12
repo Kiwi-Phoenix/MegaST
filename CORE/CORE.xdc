@@ -43,3 +43,7 @@ create_pblock pblock_hr_ck
 add_cells_to_pblock [get_pblocks pblock_hr_ck] [get_cells {i_framework/i_hyperram/hyperram_ctrl_inst/hb_ck_ddr_o_reg[*]}]
 resize_pblock [get_pblocks pblock_hr_ck] -add {SLICE_X0Y200:SLICE_X5Y209}
 set_property IS_SOFT FALSE [get_pblocks pblock_hr_ck]
+
+# Internal floppy drive (floppy/m65_floppy_port.vhd): asynchronous inputs with synchronisers, slow outputs
+set_false_path -to   [get_ports {f_density_o f_motora_o f_motorb_o f_selecta_o f_selectb_o f_side1_o f_stepdir_o f_step_o f_wdata_o f_wgate_o}]
+set_false_path -from [get_ports {f_diskchanged_i f_index_i f_rdata_i f_track0_i f_writeprotect_i}]

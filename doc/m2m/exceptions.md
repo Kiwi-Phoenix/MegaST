@@ -52,6 +52,15 @@ are removed. `top_mega65-r3.vhd` (no SDRAM) leaves the SDRAM ports open and pass
 are in block RAM (`CORE/verilog/bram_m65.v`, selected by `G_BOARD` in `CORE/vhdl/mega65.vhd`), see
 `doc/DEVELOPMENT.md`.
 
+### Floppy drive pins for the core (board tops)
+
+`M2M/vhdl/top_mega65-r3.vhd` .. `-r6.vhd`: the framework ties the outputs to the internal 3.5" floppy drive
+off (`f_* <= '1'`). Instead, all 15 drive pins are passed to the core (new ports `f_*` of `MEGA65_Core`, at
+the end of the `CORE` port map, marked `MegaST`); the tie-offs are removed. Inside the core,
+`CORE/vhdl/floppy/m65_floppy_port.vhd` owns the pins and keeps every output inactive unless something drives
+it (see `doc/real-floppy.md`). The pins are the same on every board revision, so this is a candidate for
+upstream M2M.
+
 ### R3 top brought in line with the R4-R6 tops
 
 `M2M/vhdl/top_mega65-r3.vhd`: the paddle drain, the scanlines and the PMOD pins are wired like in
