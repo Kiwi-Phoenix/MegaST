@@ -78,6 +78,7 @@ Simulate first. Every hardware round trip costs the maintainer time.
   the R3 memory variant. `KEY=<col*8+row> KEY_AT=<frame>` presses a key, `MEM=0..5` sets
   the ST RAM (512 KB to 14 MB, default 1 MB).
 * `CORE/sim/{keyboard,tos_loader,floppy_swap,fdc_bridge,rmb_guard,real_floppy}/run.sh`: GHDL unit tests.
+* `CORE/sim/real_floppy/run_wf1772.sh`: WF1772 floppy controller, original vs. clock enable version (4 min).
 * `CORE/sim/fastseek/run.sh`: firmware fast seek in the QNICE emulator.
 * `CORE/sim/mntmem/run.sh`: remembering the mounted images (`/atarist/stmount`) in the QNICE emulator.
 * `CORE/sim/acsi_write/run.sh <emutos tos.img> [delay]`: hard disk writes (64 KB, every sector checked).

@@ -2,7 +2,10 @@
 
 Status (2026-10-12): phase 0 implemented: `CORE/vhdl/floppy/m65_floppy_port.vhd` (layer 1, read only),
 `CORE/vhdl/floppy/floppy_probe.vhd`, the pins routed to the core, the JTAG probe `tools/probe4.tcl` and the GHDL
-test `CORE/sim/real_floppy/run.sh`. Phase 0 hardware session done (results in section 1). Next: phase 2 (WF1772IP). Feature request: issue #15.
+test `CORE/sim/real_floppy/run.sh`. Phase 0 hardware session done (results in section 1). Phase 2: WF1772IP imported and converted to a clock enable
+(`CORE/vhdl/floppy/wf1772ip/`, `tools/wf1772_ce.py`), proven identical to the original at 16 MHz by
+`CORE/sim/real_floppy/run_wf1772.sh` (VHDL flux drive model `floppy_model.vhd`). Next: the wrapper (short DMA
+selects must be stretched over at least one `CE` edge) and phase 3. Feature request: issue #15.
 
 The goal is two things: drive A: of MegaST on the MEGA65's internal 3.5" drive, and a set of building blocks
 that other MiSTer2MEGA65 cores (C64 1581, Amiga, Amstrad CPC, Spectrum +3, BBC Master, SAM Coupé, MSX, PC)
