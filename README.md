@@ -1,6 +1,9 @@
 Atari ST/STe for MEGA65 (MegaST)
 ================================
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support%20MegaST-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/cjf077)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-freemchr-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/freemchr)
+
 This is a port of the [AtariST_MiSTer](https://github.com/MiSTer-devel/AtariST_MiSTer)
 core (the "MiSTery" Atari ST/STe core by Till Harbaum, Gyorgy Szombathelyi, Jorge Cwik,
 Alexey Melnikov and others) to the [MEGA65](https://mega65.org), using the
@@ -24,7 +27,7 @@ saved. **All versions up to 0.4.10 damage hard disk images when writing** (issue
 wrote to an image with one of them, restore it from a backup.
 
 **Support:** MegaST is free and open source. If you enjoy it, you can support its development via
-[GitHub Sponsors](https://github.com/sponsors/freemchr).
+[Buy Me a Coffee](https://buymeacoffee.com/cjf077) or [GitHub Sponsors](https://github.com/sponsors/freemchr).
 
 Tested on a MEGA65 R6
 ---------------------
