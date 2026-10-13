@@ -248,9 +248,11 @@ int main(int argc, char** argv) {
     bool mouse_amiga = getenv("MOUSE_AMIGA") != nullptr;
     int mouse_phase = 0; uint64_t mouse_next = 0;
     top->joy_mouse = 0;
-    // KEY_AT=n KEY=i: press the ST matrix key i (column * 8 + row) from frame n on for 5 frames
+    // KEY_AT=n KEY=i: press the ST matrix key i (column * 8 + row) from frame n on for 5 frames;
+    // KEY_EVERY=m: press it again every m frames
     int key_at = getenv("KEY_AT") ? atoi(getenv("KEY_AT")) : -1;
     int key_idx = getenv("KEY") ? atoi(getenv("KEY")) : 0;
+    int key_every = getenv("KEY_EVERY") ? atoi(getenv("KEY_EVERY")) : 0;
     while (frame < frames) {
         if (key_at >= 0 && frame == key_at && (top->kbd_matrix[key_idx / 32] >> (key_idx % 32) & 1)) {
             printf("key %d pressed at frame %d\n", key_idx, frame);
@@ -259,7 +261,7 @@ int main(int argc, char** argv) {
         if (key_at >= 0 && frame == key_at + 5) {
             printf("key %d released at frame %d\n", key_idx, frame);
             top->kbd_matrix[key_idx / 32] |= 1u << (key_idx % 32);
-            key_at = -1;
+            key_at = key_every > 5 ? key_at + key_every : -1;
         }
         if (frame == reset_at) {
             printf("reset at frame %d\n", frame);

@@ -7,7 +7,7 @@
 # Usage:
 #    ./build.sh                     (VFLAGS=-DACSI_TRACE ./build.sh: trace the ACSI transfers,
 #                                    VFLAGS=-DKBD_TRACE: trace the bytes the IKBD sends;
-#                                    run with KEY=<column*8+row> KEY_AT=<frame> to press a key,
+#                                    run with KEY=<column*8+row> KEY_AT=<frame> to press a key (KEY_EVERY=<n>: again every n frames),
 #                                    VFLAGS=-DBRAM_MEM: MEGA65 R3 variant with block RAM, 512 KB;
 #                                    run with MONO=1 for the SM124 monochrome monitor (71 Hz),
 #                                    DUMP_FROM=<frame> writes every frame from <frame> on,

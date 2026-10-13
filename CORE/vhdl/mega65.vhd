@@ -293,7 +293,10 @@ signal main_rfd_sel_a, main_rfd_motor, main_rfd_side, main_rfd_dir_in, main_rfd_
 signal main_rfd_wgate, main_rfd_wdata, main_realfd : std_logic;
 signal fd_flux, fd_rdata, fd_index, fd_track0, fd_wprot, fd_dskchg, fd_step_busy, fd_motor_on : std_logic;
 signal fp_snap      : std_logic_vector(223 downto 0);
-signal fp_sr        : std_logic_vector(223 downto 0);
+signal fp_sr        : std_logic_vector(303 downto 0);
+signal fp_log_idx   : std_logic_vector(7 downto 0) := (others => '0');   -- JTAG TCK domain, quasi static
+signal fp_log_entry : std_logic_vector(55 downto 0);
+signal fp_log_count : std_logic_vector(15 downto 0);
 signal fp_cmd_tck   : std_logic_vector(23 downto 0) := (others => '0');
 signal fp_tog_tck   : std_logic := '0';
 signal fp_tog_sync  : std_logic_vector(2 downto 0) := (others => '0');
@@ -700,7 +703,10 @@ begin
          sdram_dqmh_o         => sdram_dqmh_o,
          sdram_dq_io          => sdram_dq_io,
          dbg_st_matrix_o      => kp_st_matrix,
-         dbg_kbd_bytes_o      => kp_kbd_bytes
+         dbg_kbd_bytes_o      => kp_kbd_bytes,
+         dbg_fdc_idx_i        => fp_log_idx,
+         dbg_fdc_entry_o      => fp_log_entry,
+         dbg_fdc_count_o      => fp_log_count
       ); -- i_main
 
    ---------------------------------------------------------------------------------------------
@@ -1289,9 +1295,12 @@ begin
          motor_on_i  => fd_motor_on
       ); -- i_floppy_probe
 
-   -- JTAG probe of the floppy drive: JTAG instruction USER4 (0x23), then a 224 bit data register scan
-   -- (LSB first) returns the snapshot of floppy_probe.vhd. The bits shifted in are taken as a command when
-   -- bits 15..8 are 0xA5 (a read scan shifts in zeros), see tools/probe4.tcl.
+   -- JTAG probe of the floppy drive: JTAG instruction USER4 (0x23), then a 304 bit data register scan
+   -- (LSB first) returns the snapshot of floppy_probe.vhd (bits 223..0), the number of commands the real
+   -- floppy controller has logged (239..224), log entry fp_log_idx (295..240, see wd1772_m65.v) and
+   -- fp_log_idx (303..296). The bits shifted in are taken as a command for floppy_probe.vhd when bits 15..8
+   -- are 0xA5, and select the log entry (bits 7..0) when they are 0x5A (a read scan shifts in zeros), see
+   -- tools/probe4.tcl. The log entry crosses clock domains unsynchronized: read it while no command runs.
    fp_bscan : BSCANE2
       generic map (
          JTAG_CHAIN => 4
@@ -1314,12 +1323,14 @@ begin
    begin
       if rising_edge(fp_tck) then
          if fp_sel = '1' and fp_capture = '1' then
-            fp_sr <= fp_snap;
+            fp_sr <= fp_log_idx & fp_log_entry & fp_log_count & fp_snap;
          elsif fp_sel = '1' and fp_shift = '1' then
-            fp_sr <= fp_tdi & fp_sr(223 downto 1);
+            fp_sr <= fp_tdi & fp_sr(303 downto 1);
          elsif fp_sel = '1' and fp_update = '1' and fp_sr(15 downto 8) = x"A5" then
             fp_cmd_tck <= fp_sr(23 downto 0);
             fp_tog_tck <= not fp_tog_tck;
+         elsif fp_sel = '1' and fp_update = '1' and fp_sr(15 downto 8) = x"5A" then
+            fp_log_idx <= fp_sr(7 downto 0);
          end if;
       end if;
    end process fp_shiftreg;

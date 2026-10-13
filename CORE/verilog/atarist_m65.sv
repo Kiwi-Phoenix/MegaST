@@ -173,7 +173,11 @@ module atarist_m65
 
 	// debugging (JTAG probe in mega65.vhd): the last 4 bytes the CPU read from the keyboard ACIA's
 	// data register, the newest one in bits 7..0
-	output reg [31:0] dbg_kbd_bytes
+	output reg [31:0] dbg_kbd_bytes,
+	// the command log of the real floppy controller (wd1772_m65.v): entry dbg_fdc_idx, commands logged
+	input       [7:0] dbg_fdc_idx,
+	output     [55:0] dbg_fdc_entry,
+	output     [15:0] dbg_fdc_count
 );
 
 wire UART_RXD = uart_rxd;
@@ -1143,7 +1147,11 @@ wd1772_m65 wd1772_m65 (
 	.rdata    ( rfd_rdata                     ),
 	.index    ( rfd_index                     ),
 	.track0   ( rfd_track0                    ),
-	.wprot    ( rfd_wprot                     )
+	.wprot    ( rfd_wprot                     ),
+	.side     ( rfd_side                      ),
+	.dbg_idx  ( dbg_fdc_idx                   ),
+	.dbg_entry( dbg_fdc_entry                 ),
+	.dbg_count( dbg_fdc_count                 )
 );
 
 // PSG port A: drive select and side are low active

@@ -159,7 +159,10 @@ entity main is
 
       -- debugging (JTAG probe in mega65.vhd)
       dbg_st_matrix_o         : out std_logic_vector(119 downto 0);  -- ST keyboard matrix (low active)
-      dbg_kbd_bytes_o         : out std_logic_vector(31 downto 0)    -- last 4 bytes the CPU read from the keyboard ACIA
+      dbg_kbd_bytes_o         : out std_logic_vector(31 downto 0);   -- last 4 bytes the CPU read from the keyboard ACIA
+      dbg_fdc_idx_i           : in  std_logic_vector(7 downto 0);    -- real floppy controller: command log entry
+      dbg_fdc_entry_o         : out std_logic_vector(55 downto 0);   -- (see wd1772_m65.v)
+      dbg_fdc_count_o         : out std_logic_vector(15 downto 0)    -- commands logged so far
    );
 end entity main;
 
@@ -277,7 +280,10 @@ component atarist_m65 is
       sdram_dqml      : out   std_logic;
       sdram_dqmh      : out   std_logic;
       sdram_dq        : inout std_logic_vector(15 downto 0);
-      dbg_kbd_bytes   : out   std_logic_vector(31 downto 0)
+      dbg_kbd_bytes   : out   std_logic_vector(31 downto 0);
+      dbg_fdc_idx     : in    std_logic_vector(7 downto 0);
+      dbg_fdc_entry   : out   std_logic_vector(55 downto 0);
+      dbg_fdc_count   : out   std_logic_vector(15 downto 0)
    );
 end component atarist_m65;
 
@@ -565,7 +571,10 @@ begin
          sdram_dqml      => sdram_dqml_o,
          sdram_dqmh      => sdram_dqmh_o,
          sdram_dq        => sdram_dq_io,
-         dbg_kbd_bytes   => dbg_kbd_bytes_o
+         dbg_kbd_bytes   => dbg_kbd_bytes_o,
+         dbg_fdc_idx     => dbg_fdc_idx_i,
+         dbg_fdc_entry   => dbg_fdc_entry_o,
+         dbg_fdc_count   => dbg_fdc_count_o
       ); -- i_atarist
 
    -- Floppy drives A: and B: can be swapped in the menu (e.g. to boot from B:)

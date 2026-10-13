@@ -73,19 +73,41 @@ module tb_top (
   end
 `endif
 `ifdef FDC_TRACE
-  // trace the FDC register accesses of the real floppy controller (wd1772_m65.v), build with VFLAGS=-DFDC_TRACE
-  reg fdc_sel_d, rfd_drq_d, rfd_irq_d; integer fdc_n = 0, drq_n = 0;
+  // trace the FDC of either floppy path (image: fdc1772.sv, real drive: wd1772_m65.v), build with VFLAGS=-DFDC_TRACE:
+  // CPU register writes with the PSG drive select/side, status reads when the value changes, and at each INTRQ
+  // the number and the checksum of the bytes moved by DMA since the last command (compare the two paths' logs)
+  reg fdc_sel_d, fdc_dsel_d, fdc_irq_d; reg [7:0] fdc_last_st = 8'hff;
+  integer fdc_n = 0, dma_n = 0, dma_sum = 0;
   always @(posedge clk_32) begin
-    fdc_sel_d <= dut.fdc_sel;
-    rfd_drq_d <= dut.rfd_drq;
-    rfd_irq_d <= dut.rfd_irq;
-    if (dut.rfd_drq & ~rfd_drq_d) drq_n <= drq_n + 1;
-    if (dut.fdc_sel & ~fdc_sel_d & ~dut.dma.fdc_dma_sel & fdc_n < 400) begin
-      fdc_n <= fdc_n + 1;
-      if (dut.fdc_rw) $display("FDC read  reg %0d = %02x (drq so far %0d)", dut.fdc_addr, dut.fdc_dout, drq_n);
-      else            $display("FDC write reg %0d = %02x", dut.fdc_addr, dut.fdc_din);
+    fdc_sel_d  <= dut.fdc_sel;
+    fdc_dsel_d <= dut.dma.fdc_dma_sel;
+    fdc_irq_d  <= dut.fdc_irq;
+    if (dut.dma.fdc_dma_sel & ~fdc_dsel_d & dut.fdc_rw) begin
+      dma_n   <= dma_n + 1;
+      dma_sum <= (dma_sum * 31 + dut.fdc_dout) & 32'h7fffffff;
     end
-    if (dut.rfd_irq & ~rfd_irq_d) $display("FDC INTRQ (drq so far %0d)", drq_n);
+    if (dut.fdc_sel & ~fdc_sel_d & ~dut.dma.fdc_dma_sel & fdc_n < 20000) begin
+      if (!dut.fdc_rw) begin
+        fdc_n <= fdc_n + 1;
+        $display("FDC write reg %0d = %02x  (sel %b side %b)", dut.fdc_addr, dut.fdc_din, dut.floppy_sel, dut.floppy_side);
+        if (dut.fdc_addr == 0) begin dma_n <= 0; dma_sum <= 0; end
+      end else if (dut.fdc_addr != 0 || dut.fdc_dout != fdc_last_st) begin
+        fdc_n <= fdc_n + 1;
+        $display("FDC read  reg %0d = %02x", dut.fdc_addr, dut.fdc_dout);
+        if (dut.fdc_addr == 0) fdc_last_st <= dut.fdc_dout;
+      end
+    end
+    if (dut.fdc_irq & ~fdc_irq_d) $display("FDC INTRQ  dma bytes %0d sum %08x", dma_n, dma_sum);
+  end
+  // the command log of the real floppy controller (JTAG probe, tools/probe4.tcl LOG=1): show each entry
+  // when the next command has ended, so that its status is filled in
+  reg [15:0] fdc_log_count_d = 0;
+  always @(posedge clk_32) begin
+    fdc_log_count_d <= fdc_log_count;
+    if (fdc_log_count != fdc_log_count_d && fdc_log_count >= 2)
+      $display("FDC LOG #%0d cmd %02x track %0d data %0d sector %0d side %0d dma %0d status %02x", fdc_log_count - 2,
+        fdc_log_entry[7:0], fdc_log_entry[15:8], fdc_log_entry[23:16], fdc_log_entry[31:24], fdc_log_entry[50],
+        fdc_log_entry[49:40], fdc_log_entry[39:32]);
   end
 `endif
 `ifdef RTC_TRACE
@@ -137,6 +159,9 @@ module tb_top (
   wire  [1:0] sdram_ba;
   wire [12:0] sdram_a;
   wire [15:0] sdram_dq;
+  wire [55:0] fdc_log_entry;
+  wire [15:0] fdc_log_count;
+  wire  [7:0] fdc_log_idx = fdc_log_count[7:0] - 8'd2;
 
 `ifdef BRAM_MEM
   // MEGA65 R3 variant: ST RAM, TOS and cartridge in block RAM (VFLAGS=-DBRAM_MEM ./build.sh)
@@ -167,7 +192,8 @@ module tb_top (
     .rfd_rdata(rfd_rdata), .rfd_index(rfd_index), .rfd_track0(rfd_track0), .rfd_wprot(rfd_wprot),
     .sdram_clk(sdram_clk), .sdram_cke(sdram_cke), .sdram_ras_n(sdram_ras_n), .sdram_cas_n(sdram_cas_n),
     .sdram_we_n(sdram_we_n), .sdram_cs_n(sdram_cs_n), .sdram_ba(sdram_ba), .sdram_a(sdram_a),
-    .sdram_dqml(sdram_dqml), .sdram_dqmh(sdram_dqmh), .sdram_dq(sdram_dq)
+    .sdram_dqml(sdram_dqml), .sdram_dqmh(sdram_dqmh), .sdram_dq(sdram_dq),
+    .dbg_fdc_idx(fdc_log_idx), .dbg_fdc_entry(fdc_log_entry), .dbg_fdc_count(fdc_log_count)
   );
 
   sdram_model sdram (
