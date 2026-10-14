@@ -293,7 +293,7 @@ signal main_rfd_sel_a, main_rfd_motor, main_rfd_side, main_rfd_dir_in, main_rfd_
 signal main_rfd_wgate, main_rfd_wdata, main_realfd : std_logic;
 signal fd_flux, fd_rdata, fd_index, fd_track0, fd_wprot, fd_dskchg, fd_step_busy, fd_motor_on : std_logic;
 signal fp_snap      : std_logic_vector(223 downto 0);
-signal fp_sr        : std_logic_vector(303 downto 0);
+signal fp_sr        : std_logic_vector(335 downto 0);
 signal fp_log_idx   : std_logic_vector(7 downto 0) := (others => '0');   -- JTAG TCK domain, quasi static
 signal fp_log_entry : std_logic_vector(55 downto 0);
 signal fp_log_count : std_logic_vector(15 downto 0);
@@ -301,9 +301,21 @@ signal fp_cmd_tck   : std_logic_vector(23 downto 0) := (others => '0');
 signal fp_tog_tck   : std_logic := '0';
 signal fp_tog_sync  : std_logic_vector(2 downto 0) := (others => '0');
 signal fp_cmd_valid : std_logic := '0';
-signal fp_capture, fp_sel, fp_shift, fp_update, fp_tck, fp_tdi : std_logic;
+signal fp_capture, fp_sel, fp_shift, fp_update, fp_tck, fp_tdi, fp_tdo : std_logic;
+-- flux capture (flux_capture.vhd): armed and dumped through USER4 (commands with bits 15..8 = 0xC3)
+signal fx_arm_tog   : std_logic := '0';                                  -- TCK domain
+signal fx_arm_sync  : std_logic_vector(2 downto 0) := (others => '0');
+signal fx_arm       : std_logic := '0';
+signal fx_count     : std_logic_vector(17 downto 0);
+signal fx_busy, fx_done : std_logic;
+signal fx_dump      : std_logic := '0';                                  -- TCK domain: scans stream the buffer
+signal fx_addr      : unsigned(16 downto 0) := (others => '0');
+signal fx_data      : std_logic_vector(7 downto 0);
+signal fx_byte      : std_logic_vector(7 downto 0) := (others => '0');
+signal fx_bit       : unsigned(2 downto 0) := (others => '0');
 attribute ASYNC_REG : string;
 attribute ASYNC_REG of fp_tog_sync : signal is "TRUE";
+attribute ASYNC_REG of fx_arm_sync : signal is "TRUE";
 
 ---------------------------------------------------------------------------------------------
 -- Clocks and active high reset signals for each clock domain
@@ -1295,12 +1307,36 @@ begin
          motor_on_i  => fd_motor_on
       ); -- i_floppy_probe
 
-   -- JTAG probe of the floppy drive: JTAG instruction USER4 (0x23), then a 304 bit data register scan
+   -- Flux capture of the internal floppy drive (debugging, flux_capture.vhd): 128 KB, about 3 revolutions
+   i_flux_capture : entity work.flux_capture
+      generic map (
+         G_ADDR_BITS => 17
+      )
+      port map (
+         clk_i     => main_clk,
+         rst_i     => main_rst,
+         arm_i     => fx_arm,
+         flux_i    => fd_flux,
+         index_i   => fd_index,
+         count_o   => fx_count,
+         busy_o    => fx_busy,
+         done_o    => fx_done,
+         rd_clk_i  => fp_tck,
+         rd_addr_i => std_logic_vector(fx_addr),
+         rd_data_o => fx_data
+      ); -- i_flux_capture
+
+   -- JTAG probe of the floppy drive: JTAG instruction USER4 (0x23), then a 336 bit data register scan
    -- (LSB first) returns the snapshot of floppy_probe.vhd (bits 223..0), the number of commands the real
-   -- floppy controller has logged (239..224), log entry fp_log_idx (295..240, see wd1772_m65.v) and
-   -- fp_log_idx (303..296). The bits shifted in are taken as a command for floppy_probe.vhd when bits 15..8
-   -- are 0xA5, and select the log entry (bits 7..0) when they are 0x5A (a read scan shifts in zeros), see
-   -- tools/probe4.tcl. The log entry crosses clock domains unsynchronized: read it while no command runs.
+   -- floppy controller has logged (239..224), log entry fp_log_idx (295..240, see wd1772_m65.v),
+   -- fp_log_idx (303..296), the bytes of the flux capture (321..304), capture busy (322) and done (323).
+   -- The bits shifted in are a command when bits 15..8 are:
+   --    0xA5: for floppy_probe.vhd
+   --    0x5A: select the log entry (bits 7..0)
+   --    0xC3: flux capture, bits 7..0: 01 = start a capture, 02 = dump: from now on every scan streams the
+   --          capture buffer (LSB first, byte after byte, from address 0 on), 00 = back to the snapshot
+   -- A read scan shifts in zeros, see tools/probe4.tcl. The log entry and the capture buffer cross clock
+   -- domains unsynchronized: read them while no command runs and after the capture is done.
    fp_bscan : BSCANE2
       generic map (
          JTAG_CHAIN => 4
@@ -1316,21 +1352,46 @@ begin
          TDI     => fp_tdi,
          TMS     => open,
          UPDATE  => fp_update,
-         TDO     => fp_sr(0)
+         TDO     => fp_tdo
       );
+
+   fp_tdo <= fx_byte(0) when fx_dump = '1' else fp_sr(0);
 
    fp_shiftreg : process (fp_tck)
    begin
       if rising_edge(fp_tck) then
          if fp_sel = '1' and fp_capture = '1' then
-            fp_sr <= fp_log_idx & fp_log_entry & fp_log_count & fp_snap;
+            fp_sr <= x"000" & fx_done & fx_busy & fx_count & fp_log_idx & fp_log_entry & fp_log_count & fp_snap;
          elsif fp_sel = '1' and fp_shift = '1' then
-            fp_sr <= fp_tdi & fp_sr(303 downto 1);
+            fp_sr <= fp_tdi & fp_sr(335 downto 1);
          elsif fp_sel = '1' and fp_update = '1' and fp_sr(15 downto 8) = x"A5" then
             fp_cmd_tck <= fp_sr(23 downto 0);
             fp_tog_tck <= not fp_tog_tck;
          elsif fp_sel = '1' and fp_update = '1' and fp_sr(15 downto 8) = x"5A" then
             fp_log_idx <= fp_sr(7 downto 0);
+         elsif fp_sel = '1' and fp_update = '1' and fp_sr(15 downto 8) = x"C3" then
+            case fp_sr(7 downto 0) is
+               when x"01"  => fx_arm_tog <= not fx_arm_tog;
+               when x"02"  => fx_dump <= '1';
+                              fx_addr <= (others => '0');
+               when others => fx_dump <= '0';
+            end case;
+         end if;
+
+         -- dump: fx_data is the byte at fx_addr one TCK later; a byte is loaded at the capture and after
+         -- every 8 shifted bits, then fx_addr moves on (so the next byte is ready 8 TCK cycles later)
+         if fx_dump = '1' and fp_sel = '1' and fp_capture = '1' then
+            fx_byte <= fx_data;
+            fx_addr <= fx_addr + 1;
+            fx_bit  <= (others => '0');
+         elsif fx_dump = '1' and fp_sel = '1' and fp_shift = '1' then
+            if fx_bit = 7 then
+               fx_byte <= fx_data;
+               fx_addr <= fx_addr + 1;
+            else
+               fx_byte <= '0' & fx_byte(7 downto 1);
+            end if;
+            fx_bit <= fx_bit + 1;
          end if;
       end if;
    end process fp_shiftreg;
@@ -1341,6 +1402,8 @@ begin
       if rising_edge(main_clk) then
          fp_tog_sync  <= fp_tog_sync(1 downto 0) & fp_tog_tck;
          fp_cmd_valid <= fp_tog_sync(2) xor fp_tog_sync(1);
+         fx_arm_sync  <= fx_arm_sync(1 downto 0) & fx_arm_tog;
+         fx_arm       <= fx_arm_sync(2) xor fx_arm_sync(1);
       end if;
    end process fp_cdc;
 

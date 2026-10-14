@@ -61,7 +61,8 @@ for line in lines:
     per = f(v, 55, 32)
     rpm = "%.1f rpm" % (60 * CLK / per) if per and per != 0xFFFFFF else "no revolution"
     bins = [f(v, 95 + 16 * i, 80 + 16 * i) for i in range(6)]
-    print("ctrl %02x idx %5d %s flux %6d [%s] steps %d dskchg edges %d wprot edges %d clk %04x | %s" % (
+    print("ctrl %02x idx %5d %s flux %6d [%s] steps %d dskchg edges %d wprot edges %d clk %04x capture %d%s%s | %s" % (
         ctrl, f(v, 31, 16), rpm, f(v, 79, 56),
         " ".join("%s:%d" % (n, b) for n, b in zip(BINS, bins)),
-        f(v, 191, 176), f(v, 199, 192), f(v, 207, 200), f(v, 223, 208), levels or "-"))
+        f(v, 191, 176), f(v, 199, 192), f(v, 207, 200), f(v, 223, 208), f(v, 321, 304),
+        " busy" if f(v, 322, 322) else "", " done" if f(v, 323, 323) else "", levels or "-"))

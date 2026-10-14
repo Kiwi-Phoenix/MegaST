@@ -68,7 +68,7 @@ def sectors(fl):
         if mark == 0xFE:
             hdr = [byte_at(p + 16 * k) for k in range(7)]
             ok = crc16(bytes([0xA1] * 3 + hdr[:5])) == hdr[5] << 8 | hdr[6]
-            idam = (hdr[0], hdr[1], hdr[2], ok, quality(i, p + 16 * 7))
+            idam = (hdr[1], hdr[2], hdr[3], ok, quality(i, p + 16 * 7))   # track, side, sector
             i = p + 16 * 7
         elif mark == 0xFB and idam:
             data = [byte_at(p + 16 * k) for k in range(515)]
@@ -87,5 +87,5 @@ if __name__ == "__main__":
     for r, fl in enumerate(revs):
         line = []
         for (c, h, sec, idok, (imx, imn)), dok, (mx, mn) in sectors(fl):
-            line.append("%d%s%s(max %d mean %d)" % (sec, "" if idok else "!ID", "" if dok else "!CRC", mx, mn))
+            line.append("%d.%d/%d%s%s(max %d mean %d)" % (c, h, sec, "" if idok else "!ID", "" if dok else "!CRC", mx, mn))
         print(" rev %d: %s" % (r, "  ".join(line)))
