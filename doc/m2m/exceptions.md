@@ -69,7 +69,7 @@ upstream M2M.
 ### Paddle drain only for the 1351 mouse (board tops)
 
 `M2M/vhdl/top_mega65-r*.vhd`: the paddle discharge pulses (pins 5 and 9, about 2 kHz) upset optical
-Amiga mice, so `paddle_drain_o` is gated with the menu bit of the 1351 mouse (`main_osm_control_m(51)`,
+Amiga mice, so `paddle_drain_o` is gated with the menu bit of the 1351 mouse (`main_osm_control_m(53)`,
 `C_MENU_MOUSE1351` in `CORE/vhdl/mega65.vhd`; update the number if the menu changes). The framework's
 output goes to the new signal `fw_paddle_drain`.
 
