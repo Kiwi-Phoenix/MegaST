@@ -335,7 +335,7 @@ constant OPTM_S_SAVING     : string := "<Saving>";          -- the internal writ
 --             Do use a lower case \n. If you forget one of them or if you use upper case, you will run into undefined behavior.
 --          2. Start each line that contains an actual menu item (multi- or single-select) with a Space character,
 --             otherwise you will experience visual glitches.
-constant OPTM_SIZE         : natural := 103;  -- amount of items including empty lines:
+constant OPTM_SIZE         : natural := 104;  -- amount of items including empty lines:
                                              -- needs to be equal to the number of lines in OPTM_ITEMS and amount of items in OPTM_GROUPS
                                              -- IMPORTANT: If SAVE_SETTINGS is true and OPTM_SIZE changes: Make sure to re-generate and
                                              -- and re-distribute the config file. You can make a new one using M2M/tools/make_config.sh
@@ -387,68 +387,69 @@ constant OPTM_ITEMS        : string :=
    " Write protect floppies\n"    &   -- 38
    " Swap floppy A: and B:\n"     &   -- 39
    " Real floppy drive as A:\n"   &   -- 40
-   "\n"                           &   -- 41
-   " Remember floppies\n"         &   -- 42
-   " Remember TOS/cartridge\n"    &   -- 43
-   "\n"                           &   -- 44
-   " Back to main menu\n"         &   -- 45
-   " Controllers & ports\n"       &   -- 46
+   " Floppy data separator\n"     &   -- 41
+   "\n"                           &   -- 42
+   " Remember floppies\n"         &   -- 43
+   " Remember TOS/cartridge\n"    &   -- 44
+   "\n"                           &   -- 45
+   " Back to main menu\n"         &   -- 46
    " Controllers & ports\n"       &   -- 47
-   "\n"                           &   -- 48
-   " Mouse type:\n"               &   -- 49
-   " Atari mouse / joystick\n"    &   -- 50
-   " Amiga mouse\n"               &   -- 51
-   " C64 1351 mouse\n"            &   -- 52
-   "\n"                           &   -- 53
-   " Mouse port:\n"               &   -- 54
-   " Port 1, joystick port 2\n"   &   -- 55
-   " Port 2, joystick port 1\n"   &   -- 56
-   "\n"                           &   -- 57
-   " STe joypads\n"               &   -- 58
-   " PMOD: RS232/MIDI/printer\n"  &   -- 59
-   " Cubase dongle\n"             &   -- 60
-   "\n"                           &   -- 61
-   " Keyboard:\n"                 &   -- 62
-   " ST keys (positional)\n"      &   -- 63
-   " As printed, US TOS\n"        &   -- 64
-   " As printed, UK TOS\n"        &   -- 65
-   "\n"                           &   -- 66
-   " Back to main menu\n"         &   -- 67
-   " HDMI: %s\n"                  &   -- 68
-   " HDMI Settings\n"             &   -- 69
-   "\n"                           &   -- 70
-   " 720p 50 Hz 16:9\n"           &   -- 71
-   " 720p 60 Hz 16:9\n"           &   -- 72
-   " 576p 50 Hz 4:3\n"            &   -- 73
-   " 576p 50 Hz 5:4\n"            &   -- 74
-   " 640x480 60 Hz\n"             &   -- 75
-   " 720x480 59.94 Hz\n"          &   -- 76
-   " 800x600 60 Hz\n"             &   -- 77
-   "\n"                           &   -- 78
-   " DVI mode (no sound)\n"       &   -- 79
-   "\n"                           &   -- 80
-   " Back to main menu\n"         &   -- 81
-   " VGA: %s\n"                   &   -- 82
-   " VGA Settings\n"              &   -- 83
-   "\n"                           &   -- 84
-   " 31 kHz (standard)\n"         &   -- 85
-   " 15 kHz (RGB, SCART)\n"       &   -- 86
-   " 15 kHz with CSync\n"         &   -- 87
-   "\n"                           &   -- 88
-   " No scanlines\n"              &   -- 89
-   " Scanlines 25%\n"             &   -- 90
-   " Scanlines 50%\n"             &   -- 91
-   " Scanlines 75%\n"             &   -- 92
-   "\n"                           &   -- 93
-   " Back to main menu\n"         &   -- 94
-   " HDMI: CRT emulation\n"       &   -- 95
-   " Zoom-in (hide border)\n"     &   -- 96
-   " Audio improvements\n"        &   -- 97
-   "\n"                           &   -- 98
-   " Reset Atari ST\n"            &   -- 99
-   " About & Help\n"              &   -- 100
-   "\n"                           &   -- 101
-   " Close Menu\n"                ;   -- 102
+   " Controllers & ports\n"       &   -- 48
+   "\n"                           &   -- 49
+   " Mouse type:\n"               &   -- 50
+   " Atari mouse / joystick\n"    &   -- 51
+   " Amiga mouse\n"               &   -- 52
+   " C64 1351 mouse\n"            &   -- 53
+   "\n"                           &   -- 54
+   " Mouse port:\n"               &   -- 55
+   " Port 1, joystick port 2\n"   &   -- 56
+   " Port 2, joystick port 1\n"   &   -- 57
+   "\n"                           &   -- 58
+   " STe joypads\n"               &   -- 59
+   " PMOD: RS232/MIDI/printer\n"  &   -- 60
+   " Cubase dongle\n"             &   -- 61
+   "\n"                           &   -- 62
+   " Keyboard:\n"                 &   -- 63
+   " ST keys (positional)\n"      &   -- 64
+   " As printed, US TOS\n"        &   -- 65
+   " As printed, UK TOS\n"        &   -- 66
+   "\n"                           &   -- 67
+   " Back to main menu\n"         &   -- 68
+   " HDMI: %s\n"                  &   -- 69
+   " HDMI Settings\n"             &   -- 70
+   "\n"                           &   -- 71
+   " 720p 50 Hz 16:9\n"           &   -- 72
+   " 720p 60 Hz 16:9\n"           &   -- 73
+   " 576p 50 Hz 4:3\n"            &   -- 74
+   " 576p 50 Hz 5:4\n"            &   -- 75
+   " 640x480 60 Hz\n"             &   -- 76
+   " 720x480 59.94 Hz\n"          &   -- 77
+   " 800x600 60 Hz\n"             &   -- 78
+   "\n"                           &   -- 79
+   " DVI mode (no sound)\n"       &   -- 80
+   "\n"                           &   -- 81
+   " Back to main menu\n"         &   -- 82
+   " VGA: %s\n"                   &   -- 83
+   " VGA Settings\n"              &   -- 84
+   "\n"                           &   -- 85
+   " 31 kHz (standard)\n"         &   -- 86
+   " 15 kHz (RGB, SCART)\n"       &   -- 87
+   " 15 kHz with CSync\n"         &   -- 88
+   "\n"                           &   -- 89
+   " No scanlines\n"              &   -- 90
+   " Scanlines 25%\n"             &   -- 91
+   " Scanlines 50%\n"             &   -- 92
+   " Scanlines 75%\n"             &   -- 93
+   "\n"                           &   -- 94
+   " Back to main menu\n"         &   -- 95
+   " HDMI: CRT emulation\n"       &   -- 96
+   " Zoom-in (hide border)\n"     &   -- 97
+   " Audio improvements\n"        &   -- 98
+   "\n"                           &   -- 99
+   " Reset Atari ST\n"            &   -- 100
+   " About & Help\n"              &   -- 101
+   "\n"                           &   -- 102
+   " Close Menu\n"                ;   -- 103
 
 -- define your own constants here and choose meaningful names
 -- make sure that your first group uses the value 1 (0 means "no menu item", such as text and line),
@@ -489,6 +490,7 @@ constant OPTM_G_KbdLayout  : integer := 31;
 constant OPTM_G_RemFloppy  : integer := 32;
 constant OPTM_G_RemRom     : integer := 33;
 constant OPTM_G_RealFd     : integer := 34;
+constant OPTM_G_Dsep       : integer := 35;
 
 -- !!! DO NOT TOUCH !!!
 type OPTM_GTYPE is array (0 to OPTM_SIZE - 1) of integer range 0 to 2**OPTM_GTC- 1;
@@ -536,68 +538,69 @@ constant OPTM_GROUPS       : OPTM_GTYPE := (
                                              OPTM_G_WProt + OPTM_G_SINGLESEL,                          -- 38 Write protect floppies
                                              OPTM_G_FdSwap + OPTM_G_SINGLESEL,                         -- 39 Swap floppy A: and B:
                                              OPTM_G_RealFd + OPTM_G_SINGLESEL,                         -- 40 Real floppy drive as A:
-                                             OPTM_G_LINE,                                              -- 41
-                                             OPTM_G_RemFloppy + OPTM_G_SINGLESEL + OPTM_G_STDSEL,      -- 42 Remember floppies
-                                             OPTM_G_RemRom + OPTM_G_SINGLESEL + OPTM_G_STDSEL,         -- 43 Remember TOS/cartridge
-                                             OPTM_G_LINE,                                              -- 44
-                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 45 Back to main menu
-                                             OPTM_G_SUBMENU,                                           -- 46 Controllers & ports
-                                             OPTM_G_TEXT + OPTM_G_HEADLINE,                            -- 47 Controllers & ports
-                                             OPTM_G_LINE,                                              -- 48
-                                             OPTM_G_TEXT,                                              -- 49 Mouse type:
-                                             OPTM_G_MouseType + OPTM_G_STDSEL,                         -- 50 Atari mouse / joystick
-                                             OPTM_G_MouseType,                                         -- 51 Amiga mouse
-                                             OPTM_G_MouseType,                                         -- 52 C64 1351 mouse
-                                             OPTM_G_LINE,                                              -- 53
-                                             OPTM_G_TEXT,                                              -- 54 Mouse port:
-                                             OPTM_G_MousePort + OPTM_G_STDSEL,                         -- 55 Port 1, joystick port 2
-                                             OPTM_G_MousePort,                                         -- 56 Port 2, joystick port 1
-                                             OPTM_G_LINE,                                              -- 57
-                                             OPTM_G_StePads + OPTM_G_SINGLESEL,                        -- 58 STe joypads
-                                             OPTM_G_PMOD + OPTM_G_SINGLESEL,                           -- 59 PMOD: RS232/MIDI/printer
-                                             OPTM_G_Cubase + OPTM_G_SINGLESEL,                         -- 60 Cubase dongle
-                                             OPTM_G_LINE,                                              -- 61
-                                             OPTM_G_TEXT,                                              -- 62 Keyboard:
-                                             OPTM_G_KbdLayout + OPTM_G_STDSEL,                         -- 63 ST keys (positional)
-                                             OPTM_G_KbdLayout,                                         -- 64 As printed, US TOS
-                                             OPTM_G_KbdLayout,                                         -- 65 As printed, UK TOS
-                                             OPTM_G_LINE,                                              -- 66
-                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 67 Back to main menu
-                                             OPTM_G_SUBMENU,                                           -- 68 HDMI: %s
-                                             OPTM_G_TEXT + OPTM_G_HEADLINE,                            -- 69 HDMI Settings
-                                             OPTM_G_LINE,                                              -- 70
-                                             OPTM_G_HDMI + OPTM_G_STDSEL,                              -- 71 720p 50 Hz 16:9
-                                             OPTM_G_HDMI,                                              -- 72 720p 60 Hz 16:9
-                                             OPTM_G_HDMI,                                              -- 73 576p 50 Hz 4:3
-                                             OPTM_G_HDMI,                                              -- 74 576p 50 Hz 5:4
-                                             OPTM_G_HDMI,                                              -- 75 640x480 60 Hz
-                                             OPTM_G_HDMI,                                              -- 76 720x480 59.94 Hz
-                                             OPTM_G_HDMI,                                              -- 77 800x600 60 Hz
-                                             OPTM_G_LINE,                                              -- 78
-                                             OPTM_G_DVI + OPTM_G_SINGLESEL,                            -- 79 DVI mode (no sound)
-                                             OPTM_G_LINE,                                              -- 80
-                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 81 Back to main menu
-                                             OPTM_G_SUBMENU,                                           -- 82 VGA: %s
-                                             OPTM_G_TEXT + OPTM_G_HEADLINE,                            -- 83 VGA Settings
-                                             OPTM_G_LINE,                                              -- 84
-                                             OPTM_G_VGA + OPTM_G_STDSEL,                               -- 85 31 kHz (standard)
-                                             OPTM_G_VGA,                                               -- 86 15 kHz (RGB, SCART)
-                                             OPTM_G_VGA,                                               -- 87 15 kHz with CSync
-                                             OPTM_G_LINE,                                              -- 88
-                                             OPTM_G_Scanl + OPTM_G_STDSEL,                             -- 89 No scanlines
-                                             OPTM_G_Scanl,                                             -- 90 Scanlines 25%
-                                             OPTM_G_Scanl,                                             -- 91 Scanlines 50%
-                                             OPTM_G_Scanl,                                             -- 92 Scanlines 75%
-                                             OPTM_G_LINE,                                              -- 93
-                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 94 Back to main menu
-                                             OPTM_G_CRT + OPTM_G_SINGLESEL,                            -- 95 HDMI: CRT emulation
-                                             OPTM_G_Zoom + OPTM_G_SINGLESEL,                           -- 96 Zoom-in (hide border)
-                                             OPTM_G_Audio + OPTM_G_SINGLESEL,                          -- 97 Audio improvements
-                                             OPTM_G_LINE,                                              -- 98
-                                             OPTM_G_Reset + OPTM_G_SINGLESEL,                          -- 99 Reset Atari ST
-                                             OPTM_G_About + OPTM_G_HELP,                               -- 100 About & Help
-                                             OPTM_G_LINE,                                              -- 101
-                                             OPTM_G_CLOSE                                              -- 102 Close Menu
+                                             OPTM_G_Dsep + OPTM_G_SINGLESEL + OPTM_G_STDSEL,           -- 41 Floppy data separator
+                                             OPTM_G_LINE,                                              -- 42
+                                             OPTM_G_RemFloppy + OPTM_G_SINGLESEL + OPTM_G_STDSEL,      -- 43 Remember floppies
+                                             OPTM_G_RemRom + OPTM_G_SINGLESEL + OPTM_G_STDSEL,         -- 44 Remember TOS/cartridge
+                                             OPTM_G_LINE,                                              -- 45
+                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 46 Back to main menu
+                                             OPTM_G_SUBMENU,                                           -- 47 Controllers & ports
+                                             OPTM_G_TEXT + OPTM_G_HEADLINE,                            -- 48 Controllers & ports
+                                             OPTM_G_LINE,                                              -- 49
+                                             OPTM_G_TEXT,                                              -- 50 Mouse type:
+                                             OPTM_G_MouseType + OPTM_G_STDSEL,                         -- 51 Atari mouse / joystick
+                                             OPTM_G_MouseType,                                         -- 52 Amiga mouse
+                                             OPTM_G_MouseType,                                         -- 53 C64 1351 mouse
+                                             OPTM_G_LINE,                                              -- 54
+                                             OPTM_G_TEXT,                                              -- 55 Mouse port:
+                                             OPTM_G_MousePort + OPTM_G_STDSEL,                         -- 56 Port 1, joystick port 2
+                                             OPTM_G_MousePort,                                         -- 57 Port 2, joystick port 1
+                                             OPTM_G_LINE,                                              -- 58
+                                             OPTM_G_StePads + OPTM_G_SINGLESEL,                        -- 59 STe joypads
+                                             OPTM_G_PMOD + OPTM_G_SINGLESEL,                           -- 60 PMOD: RS232/MIDI/printer
+                                             OPTM_G_Cubase + OPTM_G_SINGLESEL,                         -- 61 Cubase dongle
+                                             OPTM_G_LINE,                                              -- 62
+                                             OPTM_G_TEXT,                                              -- 63 Keyboard:
+                                             OPTM_G_KbdLayout + OPTM_G_STDSEL,                         -- 64 ST keys (positional)
+                                             OPTM_G_KbdLayout,                                         -- 65 As printed, US TOS
+                                             OPTM_G_KbdLayout,                                         -- 66 As printed, UK TOS
+                                             OPTM_G_LINE,                                              -- 67
+                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 68 Back to main menu
+                                             OPTM_G_SUBMENU,                                           -- 69 HDMI: %s
+                                             OPTM_G_TEXT + OPTM_G_HEADLINE,                            -- 70 HDMI Settings
+                                             OPTM_G_LINE,                                              -- 71
+                                             OPTM_G_HDMI + OPTM_G_STDSEL,                              -- 72 720p 50 Hz 16:9
+                                             OPTM_G_HDMI,                                              -- 73 720p 60 Hz 16:9
+                                             OPTM_G_HDMI,                                              -- 74 576p 50 Hz 4:3
+                                             OPTM_G_HDMI,                                              -- 75 576p 50 Hz 5:4
+                                             OPTM_G_HDMI,                                              -- 76 640x480 60 Hz
+                                             OPTM_G_HDMI,                                              -- 77 720x480 59.94 Hz
+                                             OPTM_G_HDMI,                                              -- 78 800x600 60 Hz
+                                             OPTM_G_LINE,                                              -- 79
+                                             OPTM_G_DVI + OPTM_G_SINGLESEL,                            -- 80 DVI mode (no sound)
+                                             OPTM_G_LINE,                                              -- 81
+                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 82 Back to main menu
+                                             OPTM_G_SUBMENU,                                           -- 83 VGA: %s
+                                             OPTM_G_TEXT + OPTM_G_HEADLINE,                            -- 84 VGA Settings
+                                             OPTM_G_LINE,                                              -- 85
+                                             OPTM_G_VGA + OPTM_G_STDSEL,                               -- 86 31 kHz (standard)
+                                             OPTM_G_VGA,                                               -- 87 15 kHz (RGB, SCART)
+                                             OPTM_G_VGA,                                               -- 88 15 kHz with CSync
+                                             OPTM_G_LINE,                                              -- 89
+                                             OPTM_G_Scanl + OPTM_G_STDSEL,                             -- 90 No scanlines
+                                             OPTM_G_Scanl,                                             -- 91 Scanlines 25%
+                                             OPTM_G_Scanl,                                             -- 92 Scanlines 50%
+                                             OPTM_G_Scanl,                                             -- 93 Scanlines 75%
+                                             OPTM_G_LINE,                                              -- 94
+                                             OPTM_G_CLOSE + OPTM_G_SUBMENU,                            -- 95 Back to main menu
+                                             OPTM_G_CRT + OPTM_G_SINGLESEL,                            -- 96 HDMI: CRT emulation
+                                             OPTM_G_Zoom + OPTM_G_SINGLESEL,                           -- 97 Zoom-in (hide border)
+                                             OPTM_G_Audio + OPTM_G_SINGLESEL,                          -- 98 Audio improvements
+                                             OPTM_G_LINE,                                              -- 99
+                                             OPTM_G_Reset + OPTM_G_SINGLESEL,                          -- 100 Reset Atari ST
+                                             OPTM_G_About + OPTM_G_HELP,                               -- 101 About & Help
+                                             OPTM_G_LINE,                                              -- 102
+                                             OPTM_G_CLOSE                                              -- 103 Close Menu
                                            );
 
 --------------------------------------------------------------------------------------------------------------------

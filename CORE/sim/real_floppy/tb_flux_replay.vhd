@@ -18,7 +18,8 @@ entity tb_flux_replay is
 generic (
    G_TRACK   : natural := 3;
    G_SECTORS : natural := 10;
-   G_PULSE   : time    := 400 ns       -- RDATA low time per flux transition
+   G_PULSE   : time    := 400 ns;      -- RDATA low time per flux transition
+   G_DSEP    : boolean := false        -- true: through the data separator fdc_dsep.vhd (as in the core)
 );
 end entity tb_flux_replay;
 
@@ -36,6 +37,9 @@ architecture sim of tb_flux_replay is
    signal rdata_n   : std_logic := '1';
    signal index_n   : std_logic := '1';
    signal rdn_sync  : std_logic_vector(3 downto 0) := (others => '1');
+   signal flux      : std_logic;
+   signal ds_rdata  : std_logic;
+   signal fdc_rdn   : std_logic;
 
    -- flux intervals in ns, negative = index mark
    type int_arr is array (natural range <>) of integer;
@@ -93,6 +97,19 @@ begin
       end if;
    end process p_sync;
 
+   -- one cycle per transition (falling edge of RDATA, as flux_o of m65_floppy_port.vhd)
+   flux <= rdn_sync(2) and not rdn_sync(1);
+
+   i_dsep : entity work.fdc_dsep
+      port map (
+         clk_i   => clk32,
+         rst_i   => not resetn,
+         flux_i  => flux,
+         rdata_o => ds_rdata
+      );
+
+   fdc_rdn <= not ds_rdata when G_DSEP else rdn_sync(3);
+
    -- the drive: one low pulse per flux transition, an index pulse at each 'I', revolutions in a loop
    p_drive : process
       constant C_FLUX : int_arr := load_flux;
@@ -115,7 +132,7 @@ begin
    i_fdc : entity wf_ce.WF1772IP_TOP_SOC
       port map (
          CLK => clk32, CE => ce, RESETn => resetn, CSn => csn, RWn => rwn, A1 => a(1), A0 => a(0),
-         DATA_IN => din, DATA_OUT => dout, DATA_EN => open, RDn => rdn_sync(3), TR00n => '1',
+         DATA_IN => din, DATA_OUT => dout, DATA_EN => open, RDn => fdc_rdn, TR00n => '1',
          IPn => index_n, WPRTn => '1', DDEn => '0', HDTYPE => '0', MO => open, WG => open, WD => open,
          STEP => open, DIRC => open, DRQ => drq, INTRQ => intrq
       );
