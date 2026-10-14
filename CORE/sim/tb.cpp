@@ -18,6 +18,7 @@ struct RealDrive {
     std::vector<uint8_t> img;
     int spt = 9, sides = 2, tracks = 80;
     int head = 0, trk = -1, sd = -1;
+    int bad_t = -1, bad_s = 0, bad_sec = 0, bad_left = 0;   // RFLOPPY_BAD: weak sector (data CRC error)
     bool wp = false, old_step = false, old_motor = false;
     std::vector<uint8_t> cells;                     // one byte per bit cell
     uint64_t rev = 0;                               // 32 MHz cycles since the index
@@ -78,7 +79,9 @@ struct RealDrive {
                 put(0xfb, last, c);
                 size_t o = ((size_t)(t * sides + s) * spt + sec - 1) * 512;
                 for (int i = 0; i < 512; i++) put(o + i < img.size() ? img[o + i] : 0, last, c);
-                crc = c; put(crc >> 8, last, c); put(crc & 0xff, last, c);
+                crc = c;
+                if (t == bad_t && s == bad_s && sec == bad_sec && bad_left > 0) crc ^= 1;   // weak sector
+                put(crc >> 8, last, c); put(crc & 0xff, last, c);
                 for (int k = 0; k < 40; k++) put(0x4e, last, c);
             }
         }
@@ -99,7 +102,13 @@ struct RealDrive {
         old_motor = motor;
         int s = side && sides == 2 ? 1 : (side ? 1 : 0);
         if (motor) {
-            if (++rev >= REV) { rev = 0; revs++; last_cell = -1; }
+            if (++rev >= REV) {
+                rev = 0; revs++; last_cell = -1;
+                if (bad_left > 0 && head == bad_t && s == bad_s && --bad_left == 0) {
+                    printf("real floppy: weak sector %d.%d/%d reads from now on (frame %d)\n", bad_t, bad_s, bad_sec, frame);
+                    trk = -1;                               // rebuild with the right CRC
+                }
+            }
             if (head != trk || s != sd) build(head, s);
             int64_t cell = (int64_t)(rev * 6 / 385);
             if (cell != last_cell) {
@@ -169,6 +178,9 @@ int main(int argc, char** argv) {
         fclose(h);
         rd.load(d);
         rd.wp = getenv("RFLOPPY_WP") != nullptr;
+        // RFLOPPY_BAD=t,s,sec,n: the data CRC of that sector is wrong for its first n revolutions under the head
+        if (getenv("RFLOPPY_BAD"))
+            sscanf(getenv("RFLOPPY_BAD"), "%d,%d,%d,%d", &rd.bad_t, &rd.bad_s, &rd.bad_sec, &rd.bad_left);
     }
 
     FILE* f = fopen(tos_name, "rb");
