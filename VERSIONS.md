@@ -1,3 +1,30 @@
+Version 1.1 - October 16, 2026
+==============================
+
+* **The MEGA65's internal floppy drive as the ST's drive A: (issue #15).** "Real floppy drive
+  as A:" in "System settings" (off by default), then "Reset Atari ST". The core has a complete
+  WD1772 floppy controller (WF1772IP by Wolfgang Förster), so original ST disks are read as on a
+  real ST, including copy protections and formats with 10 sectors and 82 tracks. Drive B: and the
+  floppy images are not used while it is on. **Read only:** the core never writes to the disk.
+  DD disks only.
+* **"Floppy read assist"** in "System settings" (on by default): the MEGA65 drive's speed varies
+  by up to 8 % within each turn of the disk, and the WD1772's data separator then misreads a
+  sector now and then; some loaders keep the wrong bytes and hang. A data separator in front of
+  the controller re-times the drive's pulses, and a sector read that fails its checksum is
+  repeated (up to 15 more turns) before the ST gets the data.
+* Tested on an R6 with an original-format Jim Power disk (82 tracks, 10 sectors): boots and loads
+  the game with no read errors. A weak spot on an older copy needed up to 26 turns: a disk that
+  reads in a PC drive can still be marginal.
+
+**The menu has two new lines:** copy the new 104 byte `/atarist/stcfg` from the zip to the SD
+card. The 102 byte file of 1.0 is reported as corrupt and the settings are not saved. The 1536
+byte `/atarist/stmount` stays valid.
+
+Known limitations: the real floppy drive is read only and DD only, and it is not tested on the
+R3/R3A, R4 and R5 yet; the right button of an Atari mouse is a short click only (issue #17); a
+tester saw some programs crash with 8 MB of ST RAM on an STe (4 MB works); the R4 and R5 builds
+are not tested on hardware yet.
+
 Version 1.0 - October 12, 2026
 ==============================
 

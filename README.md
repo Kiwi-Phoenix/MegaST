@@ -16,13 +16,12 @@ runs games and GEM programs from floppy and hard disk images. Download the core 
 on the MEGA65. Please report problems and successes in the
 [issues](https://github.com/freemchr/MegaST/issues).
 
-**Latest version: [1.0](https://github.com/freemchr/MegaST/releases/tag/v1.0)**
-(October 12, 2026), the first stable version: the HDMI picture is centred in 576p, 720x480 and
-640x480, "Remember floppies" and "Remember TOS/cartridge" in the menu, MEGA + F1..F9 for
-F11..F20 (issue #18), and the right button of an Atari mouse no longer blocks GEM for 10 seconds
-(issue #17). The core remembers the mounted disk images and the chosen TOS and cartridge
-(copy `atarist/stmount` from the zip, issue #13). Core files for the R3/R3A, R4, R5 and R6.
-**Copy the new `atarist/stcfg` (102 bytes) from the zip**, otherwise the menu settings are not
+**Latest version: [1.1](https://github.com/freemchr/MegaST/releases/tag/v1.1)**
+(October 16, 2026): **the MEGA65's internal floppy drive** works as the ST's drive A: (read only,
+issue #15, see [Real floppy drive](#real-floppy-drive)). Original ST disks, including copy
+protected games with 10 sectors and 82 tracks, are read as on a real ST. Core files for the
+R3/R3A, R4, R5 and R6.
+**Copy the new `atarist/stcfg` (104 bytes) from the zip**, otherwise the menu settings are not
 saved. **All versions up to 0.4.10 damage hard disk images when writing** (issue #11): if you
 wrote to an image with one of them, restore it from a backup.
 
@@ -50,6 +49,7 @@ Tested on a MEGA65 R6
 | Menu settings saved on the SD card (`stcfg`) | works |
 | VGA scanlines, full borders | works |
 | HDMI picture centred, not cut off on the right (576p, 720x480, 640x480) | works (since 1.0) |
+| Internal floppy drive as A: (original Jim Power disk: boot, game) | works (since 1.1); R3-R5 not tested with the drive |
 | Games: Golden Axe, Great Giana Sisters, Turrican | work |
 | Games: Buggy Boy, Goldrunner, Goldrunner II, The Hitchhiker's Guide to the Galaxy, Lemmings | work (tester report, issue #21) |
 | Cartridges, PMOD serial/MIDI/printer, Cubase dongles, Viking card, 1351 mouse, mono monitor | not tested yet |
@@ -77,6 +77,7 @@ Features
   `tos.img` is loaded at power on, another TOS image can be loaded from the menu
 * Two floppy drives (`.st` images, read/write), can be swapped (boot from B:); blank disk
   images can be created with `tools/make_st_disk.py`
+* The MEGA65's internal 3.5" drive as drive A: (real DD disks, read only)
 * Two ACSI hard disks (`.hd`/`.img`/`.vhd` images, read/write, directly on the SD card, up to 4 GB)
 * ROM cartridges (raw `.img` or `.stc`, up to 128 kB)
 * Viking/SM194 compatible 1280x1024 monochrome card (shown as 640x512 grey scale)
@@ -107,7 +108,7 @@ Requirements
   * your floppy disk images (`.st`), hard disk images (`.hd`, `.img`, `.vhd`) and cartridges (`.stc`, `.img`)
   * optionally `stcfg`, an empty settings file, if you want the menu settings to be saved (included
     in the release zip, or `cd M2M/tools && ./make_config.sh stcfg auto`). The file must have exactly
-    as many bytes as the menu has lines (`OPTM_SIZE` in `CORE/vhdl/config.vhd`, currently 102). When
+    as many bytes as the menu has lines (`OPTM_SIZE` in `CORE/vhdl/config.vhd`, currently 104). When
     the menu changes in a new release, a settings file of the old size is ignored: use the new one.
   * optionally `stmount`, if the core shall remember the mounted floppy and hard disk images and
     the TOS and cartridge chosen in the menu (included in the release zip). It must have exactly
@@ -347,6 +348,28 @@ To create an empty, formatted disk (e.g. a save disk for a game), run
 `python3 tools/make_st_disk.py blank.st` on your computer (options: `--size 360|720|800|1440`,
 `--label NAME`) and copy the image into `/atarist` on the SD card. (The FDC emulation cannot
 format a disk, so formatting a disk image in TOS does not work.)
+
+Real floppy drive
+-----------------
+
+Since 1.1 the ST can use the MEGA65's internal 3.5" drive as drive A:. Switch on "Real floppy
+drive as A:" in "System settings" and choose "Reset Atari ST". Drive A: is then the disk in the
+MEGA65's drive; drive B: and the floppy images are not used until you switch it off again.
+Original ST disks are read as on a real ST: the core has a complete WD1772 floppy controller
+(WF1772IP by Wolfgang Förster), so copy protections and formats with 10 or 11 sectors and more
+than 80 tracks work.
+
+* **Read only:** the core never writes to the disk. Programs that save to the disk (high scores,
+  save games) get an error.
+* **DD disks only** (the 720 KB type). HD disks are not supported.
+* **"Floppy read assist"** (System settings, on by default): the MEGA65 drive's speed varies
+  within each turn of the disk, more than an Atari drive's, and the WD1772 then misreads a sector
+  now and then. Some loaders hang on such an error. With read assist the core cleans up the
+  timing of the drive's signal and re-reads a sector that failed its checksum (up to 15 more
+  turns) before the ST gets it. Switch it off only to compare.
+* **Weak disks:** a disk that reads fine in a PC drive can still have weak spots. If a disk does
+  not load, try it in a real ST or make a fresh copy (e.g. with a Greaseweazle) and report it in
+  issue #15, with the board, the disk and the program.
 
 Game notes
 ----------
