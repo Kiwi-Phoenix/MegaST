@@ -1,6 +1,9 @@
 Atari ST/STe for MEGA65 (MegaST)
 ================================
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support%20MegaST-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/cjf077)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-freemchr-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/freemchr)
+
 This is a port of the [AtariST_MiSTer](https://github.com/MiSTer-devel/AtariST_MiSTer)
 core (the "MiSTery" Atari ST/STe core by Till Harbaum, Gyorgy Szombathelyi, Jorge Cwik,
 Alexey Melnikov and others) to the [MEGA65](https://mega65.org), using the
@@ -24,7 +27,7 @@ saved. **All versions up to 0.4.10 damage hard disk images when writing** (issue
 wrote to an image with one of them, restore it from a backup.
 
 **Support:** MegaST is free and open source. If you enjoy it, you can support its development via
-[GitHub Sponsors](https://github.com/sponsors/freemchr).
+[Buy Me a Coffee](https://buymeacoffee.com/cjf077) or [GitHub Sponsors](https://github.com/sponsors/freemchr).
 
 Tested on a MEGA65 R6
 ---------------------
@@ -33,7 +36,8 @@ Tested on a MEGA65 R6
 |------|--------|
 | TOS 1.04, boot to the desktop | works |
 | TOS 2.06 (STe) and EmuTOS 1.4, boot and hard disk | work (tester reports) |
-| TOS 1.00, 1.02, 1.06, 1.62 | boot to the desktop in simulation, not tried on hardware yet |
+| TOS 1.62 (STe, 1 MB) | works (tester report, issue #21) |
+| TOS 1.00, 1.02, 1.06 | boot to the desktop in simulation, not tried on hardware yet |
 | Floppy disks: loading, changing disks, reset with a disk inserted, saving | works |
 | Hard disk: 4 GB `.vhd` image (MiSTer image), boot, reading files, launching programs | works |
 | Hard disk: writing files | broken up to 0.4.10, works since 0.4.11 (tester report, issue #11) |
@@ -47,6 +51,7 @@ Tested on a MEGA65 R6
 | VGA scanlines, full borders | works |
 | HDMI picture centred, not cut off on the right (576p, 720x480, 640x480) | works (since 1.0) |
 | Games: Golden Axe, Great Giana Sisters, Turrican | work |
+| Games: Buggy Boy, Goldrunner, Goldrunner II, The Hitchhiker's Guide to the Galaxy, Lemmings | work (tester report, issue #21) |
 | Cartridges, PMOD serial/MIDI/printer, Cubase dongles, Viking card, 1351 mouse, mono monitor | not tested yet |
 | HDMI "DVI mode (no sound)" with a DVI monitor | works (tester report, issue #4) |
 | R3A board (`CORE-R3.xpr`, 512 KB) | works, including hard disk images (tester reports, issue #2) |
