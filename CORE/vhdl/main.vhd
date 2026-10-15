@@ -48,6 +48,7 @@ entity main is
       st_fd_swap_i            : in  std_logic;              -- swap floppy drives A: and B:
       st_crop_i               : in  std_logic;              -- only the graphics area is visible (no border)
       st_real_floppy_i        : in  std_logic;              -- drive A: is the internal floppy drive
+      st_fdc_retry_i          : in  std_logic;              -- internal drive: repeat failed sector reads
       st_joy_swap_i           : in  std_logic;              -- mouse in MEGA65 port 2, joystick in port 1
       st_viking_i             : in  std_logic;
       st_ste_pads_i           : in  std_logic;
@@ -193,6 +194,7 @@ component atarist_m65 is
       cfg_cubase      : in    std_logic;
       cfg_crop        : in    std_logic;
       cfg_real_floppy : in    std_logic;
+      cfg_fdc_retry   : in    std_logic;
       rtc             : in    std_logic_vector(64 downto 0);
 
       dio_download    : in    std_logic;
@@ -483,6 +485,7 @@ begin
          cfg_cubase      => st_cubase_i,
          cfg_crop        => st_crop_i,
          cfg_real_floppy => st_real_floppy_i,
+         cfg_fdc_retry   => st_fdc_retry_i,
          rtc             => rtc_i,
 
          -- the TOS image is only written while the core is held in reset

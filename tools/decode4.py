@@ -44,9 +44,11 @@ if "--log" in sys.argv:
     for n in range(max(0, count - 256), count):
         e = entries[n % 256]
         c = f(e, 7, 0)
-        print("#%5d  %02x %-20s track %3d data %3d sector %3d side %d  dma %4d  %s" % (
+        # buffered read with retries (menu "Floppy read assist", wd1772_m65.v)
+        buf = " buffered, %d retries" % f(e, 55, 52) if f(e, 51, 51) else ""
+        print("#%5d  %02x %-20s track %3d data %3d sector %3d side %d  dma %4d  %s%s" % (
             n, c, command(c), f(e, 15, 8), f(e, 23, 16), f(e, 31, 24), f(e, 50, 50), f(e, 49, 40),
-            status(c, f(e, 39, 32))))
+            status(c, f(e, 39, 32)), buf))
     sys.exit()
 
 for line in lines:

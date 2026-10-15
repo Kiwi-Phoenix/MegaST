@@ -75,7 +75,7 @@ type WHS_RECORD_ARRAY_TYPE is array (0 to WHS_RECORDS - 1) of WHS_RECORD_TYPE;
 -- window contains the amount of pages, so each zero-terminated string can be up to 4095 bytes = 4094 characters long.
 
 constant SCR_WELCOME : string :=
-   "Atari ST/STe for MEGA65 Version 1.1-test1\n" &
+   "Atari ST/STe for MEGA65 Version 1.1-test3\n" &
    "\n"                           &
    "MEGA65 port by Chris Freeman\n" &
    "Report bugs at:\n" &
@@ -98,7 +98,7 @@ constant SCR_WELCOME : string :=
    "  Press Space to continue.\n";
 
 constant HELP_1 : string :=
-   "\n Atari ST/STe for MEGA65 1.1-test1\n\n" &
+   "\n Atari ST/STe for MEGA65 1.1-test3\n\n" &
    " MEGA65 port by Chris Freeman\n" &
    " github.com/freemchr/MegaST/issues\n" &
    " MiSTer port of the MiSTery core\n" &
@@ -387,7 +387,7 @@ constant OPTM_ITEMS        : string :=
    " Write protect floppies\n"    &   -- 38
    " Swap floppy A: and B:\n"     &   -- 39
    " Real floppy drive as A:\n"   &   -- 40
-   " Floppy data separator\n"     &   -- 41
+   " Floppy read assist\n"        &   -- 41
    "\n"                           &   -- 42
    " Remember floppies\n"         &   -- 43
    " Remember TOS/cartridge\n"    &   -- 44
@@ -538,7 +538,7 @@ constant OPTM_GROUPS       : OPTM_GTYPE := (
                                              OPTM_G_WProt + OPTM_G_SINGLESEL,                          -- 38 Write protect floppies
                                              OPTM_G_FdSwap + OPTM_G_SINGLESEL,                         -- 39 Swap floppy A: and B:
                                              OPTM_G_RealFd + OPTM_G_SINGLESEL,                         -- 40 Real floppy drive as A:
-                                             OPTM_G_Dsep + OPTM_G_SINGLESEL + OPTM_G_STDSEL,           -- 41 Floppy data separator
+                                             OPTM_G_Dsep + OPTM_G_SINGLESEL + OPTM_G_STDSEL,           -- 41 Floppy read assist
                                              OPTM_G_LINE,                                              -- 42
                                              OPTM_G_RemFloppy + OPTM_G_SINGLESEL + OPTM_G_STDSEL,      -- 43 Remember floppies
                                              OPTM_G_RemRom + OPTM_G_SINGLESEL + OPTM_G_STDSEL,         -- 44 Remember TOS/cartridge

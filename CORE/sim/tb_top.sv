@@ -22,6 +22,7 @@ module tb_top (
   input         cfg_mde60,     // 1 = mono 60 Hz mode
   input         cfg_full_brd,  // 1 = full borders (menu "Full borders")
   input         cfg_real_floppy, // 1 = drive A is the internal floppy drive (RFLOPPY=, drive model in tb.cpp)
+  input         cfg_fdc_retry,   // 1 = the controller repeats failed sector reads (RFLOPPY_RAW=1: off)
   output        rfd_sel_a, rfd_motor, rfd_side, rfd_dir_in, rfd_step, rfd_wgate,
   input         rfd_rdata, rfd_index, rfd_track0, rfd_wprot,
   // hard disk 0 (the testbench emulates the M2M firmware / vdrives)
@@ -99,15 +100,25 @@ module tb_top (
     end
     if (dut.fdc_irq & ~fdc_irq_d) $display("FDC INTRQ  dma bytes %0d sum %08x", dma_n, dma_sum);
   end
+  // the buffered read with retries of wd1772_m65.v: each attempt's status and the end of the command
+  always @(posedge clk_32) begin
+    if (dut.wd1772_m65.start_read) $display("FDC RETRY start cmd %02x", dut.wd1772_m65.cpu_din);
+    if (dut.wd1772_m65.acc_end && dut.wd1772_m65.acc_kind == 2'd1 && dut.wd1772_m65.mode == 2'd1)
+      $display("FDC RETRY attempt status %02x, %0d bytes, %0d retries left", dut.wd1772_m65.ip_dout,
+        dut.wd1772_m65.cap_n, dut.wd1772_m65.tries_left);
+    if (dut.wd1772_m65.cmd_wr && !dut.wd1772_m65.sel_d && dut.wd1772_m65.mode != 2'd0)
+      $display("FDC RETRY %s command %02x in mode %0d", dut.wd1772_m65.cpu_din[7:4] == 4'hd ? "ended by" : "ignored",
+        dut.wd1772_m65.cpu_din, dut.wd1772_m65.mode);
+  end
   // the command log of the real floppy controller (JTAG probe, tools/probe4.tcl LOG=1): show each entry
   // when the next command has ended, so that its status is filled in
   reg [15:0] fdc_log_count_d = 0;
   always @(posedge clk_32) begin
     fdc_log_count_d <= fdc_log_count;
     if (fdc_log_count != fdc_log_count_d && fdc_log_count >= 2)
-      $display("FDC LOG #%0d cmd %02x track %0d data %0d sector %0d side %0d dma %0d status %02x", fdc_log_count - 2,
+      $display("FDC LOG #%0d cmd %02x track %0d data %0d sector %0d side %0d dma %0d status %02x buffered %0d retries %0d", fdc_log_count - 2,
         fdc_log_entry[7:0], fdc_log_entry[15:8], fdc_log_entry[23:16], fdc_log_entry[31:24], fdc_log_entry[50],
-        fdc_log_entry[49:40], fdc_log_entry[39:32]);
+        fdc_log_entry[49:40], fdc_log_entry[39:32], fdc_log_entry[51], fdc_log_entry[55:52]);
   end
 `endif
 `ifdef RTC_TRACE
@@ -187,7 +198,7 @@ module tb_top (
     .video_hblank(video_hblank), .video_vblank(video_vblank), .video_ce(video_ce), .video_31khz(video_mono),
     .audio_l(audio_l), .audio_r(),
     .floppy_led(), .hd_led(),
-    .cfg_real_floppy(cfg_real_floppy), .rfd_sel_a(rfd_sel_a), .rfd_motor(rfd_motor), .rfd_side(rfd_side),
+    .cfg_real_floppy(cfg_real_floppy), .cfg_fdc_retry(cfg_fdc_retry), .rfd_sel_a(rfd_sel_a), .rfd_motor(rfd_motor), .rfd_side(rfd_side),
     .rfd_dir_in(rfd_dir_in), .rfd_step(rfd_step), .rfd_wgate(rfd_wgate), .rfd_wdata(),
     .rfd_rdata(rfd_rdata), .rfd_index(rfd_index), .rfd_track0(rfd_track0), .rfd_wprot(rfd_wprot),
     .sdram_clk(sdram_clk), .sdram_cke(sdram_cke), .sdram_ras_n(sdram_ras_n), .sdram_cas_n(sdram_cas_n),

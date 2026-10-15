@@ -18,6 +18,8 @@
 --   ones up to 900 ns). Each interval is decided only when the next one has arrived, after subtracting the
 --   learned mean deviation of its (previous, this, next) pattern (27 running means, gain 1/32). On the
 --   weakest sector of a capture this doubles the margin (Jim Power track 68 side 0 sector 10: 68 -> 188 ns).
+--   But on the R6 drive the 1.1-test1 core then failed track 1 side 0 sector 2 every time, which reads
+--   without it: G_PEAKSHIFT (default false) until that is understood.
 -- * Playback: the decisions go into a FIFO (an elastic buffer) and come out as pulses n output cells
 --   apart. The output cell is the nominal 2 us, shortened or lengthened by 1/4096 per entry the FIFO is
 --   above or below C_TARGET: the controller gets an even data rate, the FIFO absorbs the wobble (the
@@ -40,7 +42,9 @@ entity fdc_dsep is
 generic (
    G_CLK_HZ      : natural := 32_083_333;
    G_CELL_NS     : natural := 2000;              -- nominal bit cell (DD: 2 us)
-   G_PULSE_NS    : natural := 250                -- output pulse length
+   G_PULSE_NS    : natural := 250;               -- output pulse length
+   G_PEAKSHIFT   : boolean := false              -- peak shift compensation (see above; off: it failed a
+                                                 -- sector on the R6 drive that reads without it)
 );
 port (
    clk_i         : in  std_logic;
@@ -130,7 +134,11 @@ begin
                   if pend_long = '1' then
                      n := 4;                                       -- too long for MFM: pass on as 4 cells
                   else
-                     x := pend_iv - shift_right(t, 5);             -- peak shift corrected
+                     if G_PEAKSHIFT then
+                        x := pend_iv - shift_right(t, 5);          -- peak shift corrected
+                     else
+                        x := pend_iv;
+                     end if;
                      if x < 2 * c + half then
                         n := 2;
                      elsif x < 3 * c + half then

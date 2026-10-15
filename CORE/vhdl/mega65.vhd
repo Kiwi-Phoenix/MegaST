@@ -614,6 +614,7 @@ begin
          st_fd_swap_i         => main_osm_control_i(C_MENU_FDSWAP),
          st_crop_i            => main_osm_control_i(C_MENU_HDMI_ZOOM),
          st_real_floppy_i     => main_realfd,
+         st_fdc_retry_i       => main_dsep,      -- menu "Floppy read assist": separator and retries
          st_joy_swap_i        => main_osm_control_i(C_MENU_JOYSWAP),
          st_viking_i          => main_osm_control_i(C_MENU_VIKING),
          st_ste_pads_i        => main_osm_control_i(C_MENU_STEPADS),
@@ -1232,8 +1233,9 @@ begin
    main_realfd <= main_osm_control_i(C_MENU_REALFD);
    main_dsep   <= main_osm_control_i(C_MENU_DSEP);
 
-   -- data separator between the drive and the floppy controller (menu "Floppy data separator", on by
-   -- default): re-times the flux so that drives with a speed wobble read reliably; off = the raw signal
+   -- data separator between the drive and the floppy controller (menu "Floppy read assist", on by
+   -- default): re-times the flux so that drives with a speed wobble read reliably; off = the raw signal.
+   -- The same item makes the floppy controller repeat failed sector reads (wd1772_m65.v, st_fdc_retry_i).
    i_fdc_dsep : entity work.fdc_dsep
       generic map (
          G_CLK_HZ => CORE_CLK_SPEED

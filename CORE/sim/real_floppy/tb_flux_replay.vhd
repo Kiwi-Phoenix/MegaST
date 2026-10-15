@@ -19,7 +19,8 @@ generic (
    G_TRACK   : natural := 3;
    G_SECTORS : natural := 10;
    G_PULSE   : time    := 400 ns;      -- RDATA low time per flux transition
-   G_DSEP    : boolean := false        -- true: through the data separator fdc_dsep.vhd (as in the core)
+   G_DSEP    : boolean := false;       -- true: through the data separator fdc_dsep.vhd (as in the core)
+   G_PEAKSHIFT : boolean := false      -- its peak shift compensation
 );
 end entity tb_flux_replay;
 
@@ -101,6 +102,9 @@ begin
    flux <= rdn_sync(2) and not rdn_sync(1);
 
    i_dsep : entity work.fdc_dsep
+      generic map (
+         G_PEAKSHIFT => G_PEAKSHIFT
+      )
       port map (
          clk_i   => clk32,
          rst_i   => not resetn,

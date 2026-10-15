@@ -18,7 +18,7 @@ struct RealDrive {
     std::vector<uint8_t> img;
     int spt = 9, sides = 2, tracks = 80;
     int head = 0, trk = -1, sd = -1;
-    int bad_t = -1, bad_s = 0, bad_sec = 0, bad_left = 0;   // RFLOPPY_BAD: weak sector (data CRC error)
+    int bad_t = -1, bad_s = 0, bad_sec = 0, bad_left = 0, bad_data = 0, bad_from = 0; bool bad_on = false;   // RFLOPPY_BAD: weak sector (data CRC error)
     bool wp = false, old_step = false, old_motor = false;
     std::vector<uint8_t> cells;                     // one byte per bit cell
     uint64_t rev = 0;                               // 32 MHz cycles since the index
@@ -78,9 +78,13 @@ struct RealDrive {
                 for (int k = 0; k < 3; k++) sync(last, c);
                 put(0xfb, last, c);
                 size_t o = ((size_t)(t * sides + s) * spt + sec - 1) * 512;
-                for (int i = 0; i < 512; i++) put(o + i < img.size() ? img[o + i] : 0, last, c);
+                bool weak = t == bad_t && s == bad_s && sec == bad_sec && bad_left > 0 && bad_on;
+                for (int i = 0; i < 512; i++) {
+                    uint8_t b = o + i < img.size() ? img[o + i] : 0;
+                    put(weak && bad_data && i >= 256 ? b ^ 0xa5 : b, last, c);   // like a real misread: wrong bytes
+                }
                 crc = c;
-                if (t == bad_t && s == bad_s && sec == bad_sec && bad_left > 0) crc ^= 1;   // weak sector
+                if (weak) crc ^= 1;                         // weak sector
                 put(crc >> 8, last, c); put(crc & 0xff, last, c);
                 for (int k = 0; k < 40; k++) put(0x4e, last, c);
             }
@@ -101,6 +105,10 @@ struct RealDrive {
         if (motor != old_motor) printf("real floppy: motor %s at frame %d, head %d\n", motor ? "on" : "off", frame, head);
         old_motor = motor;
         int s = side && sides == 2 ? 1 : (side ? 1 : 0);
+        if (!bad_on && frame >= bad_from) {
+            bad_on = true;
+            trk = -1;                                       // rebuild with the weak sector
+        }
         if (motor) {
             if (++rev >= REV) {
                 rev = 0; revs++; last_cell = -1;
@@ -178,9 +186,11 @@ int main(int argc, char** argv) {
         fclose(h);
         rd.load(d);
         rd.wp = getenv("RFLOPPY_WP") != nullptr;
-        // RFLOPPY_BAD=t,s,sec,n: the data CRC of that sector is wrong for its first n revolutions under the head
+        // RFLOPPY_BAD=t,s,sec,n[,1[,f]]: the data CRC of that sector is wrong for its first n revolutions under the head
+        // (,1: and its second half has wrong bytes, as a real misread delivers; ,f: only from frame f on)
         if (getenv("RFLOPPY_BAD"))
-            sscanf(getenv("RFLOPPY_BAD"), "%d,%d,%d,%d", &rd.bad_t, &rd.bad_s, &rd.bad_sec, &rd.bad_left);
+            sscanf(getenv("RFLOPPY_BAD"), "%d,%d,%d,%d,%d,%d", &rd.bad_t, &rd.bad_s, &rd.bad_sec, &rd.bad_left, &rd.bad_data,
+                   &rd.bad_from);
     }
 
     FILE* f = fopen(tos_name, "rb");
@@ -198,6 +208,7 @@ int main(int argc, char** argv) {
     top->cfg_mde60 = getenv("MONO60") != nullptr; // MONO60=1: mono 60 Hz mode
     top->cfg_full_brd = getenv("BORDER") != nullptr; // BORDER=1: full borders
     top->cfg_real_floppy = rf_name != nullptr;
+    top->cfg_fdc_retry = getenv("RFLOPPY_RAW") == nullptr;   // RFLOPPY_RAW=1: no read retries in the controller
     int dump_from = getenv("DUMP_FROM") ? atoi(getenv("DUMP_FROM")) : -1;   // write every frame from this one on
     top->dio_download = 1; top->dio_strobe = 0; top->tos192k_in = 0;
     for (int i = 0; i < 4; i++) top->kbd_matrix[i] = 0xffffffff;

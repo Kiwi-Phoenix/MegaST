@@ -63,6 +63,7 @@ module atarist_m65
 	input         cfg_cubase,      // Cubase 2/3 dongle in the cartridge port
 	input         cfg_crop,        // blank the border: only the graphics area is active (HDMI zoom-in)
 	input         cfg_real_floppy, // drive A: is the MEGA65's internal floppy drive (wd1772_m65.v)
+	input         cfg_fdc_retry,   // real drive: repeat failed sector reads in the controller (wd1772_m65.v)
 
 	// MEGA65 real time clock (M2M format, see rp5c15_m65.sv)
 	input  [64:0] rtc,
@@ -1149,6 +1150,7 @@ wd1772_m65 wd1772_m65 (
 	.track0   ( rfd_track0                    ),
 	.wprot    ( rfd_wprot                     ),
 	.side     ( rfd_side                      ),
+	.retry    ( cfg_fdc_retry                 ),
 	.dbg_idx  ( dbg_fdc_idx                   ),
 	.dbg_entry( dbg_fdc_entry                 ),
 	.dbg_count( dbg_fdc_count                 )
