@@ -52,9 +52,10 @@ Tested on a MEGA65 R6
 | Internal floppy drive as A: (original Jim Power disk: boot, game) | works (since 1.1); R3-R5 not tested with the drive |
 | Games: Golden Axe, Great Giana Sisters, Turrican | work |
 | Games: Buggy Boy, Goldrunner, Goldrunner II, The Hitchhiker's Guide to the Galaxy, Lemmings | work (tester report, issue #21) |
-| Cartridges, PMOD serial/MIDI/printer, Cubase dongles, Viking card, 1351 mouse, mono monitor | not tested yet |
+| Cartridges, PMOD serial/MIDI/printer, Cubase dongles, Viking card, mono monitor | not tested yet |
+| 1351 mouse | works (tester report on the R3, issue #22) |
 | HDMI "DVI mode (no sound)" with a DVI monitor | works (tester report, issue #4) |
-| R3A board (`CORE-R3.xpr`, 512 KB) | works, including hard disk images (tester reports, issue #2) |
+| R3 and R3A boards (`CORE-R3.xpr`, 512 KB) | work, including hard disk images (tester reports, issues #2, #22) |
 | R4/R5 boards (`CORE-R4.xpr`, `CORE-R5.xpr`) | not tested yet |
 
 Screenshots

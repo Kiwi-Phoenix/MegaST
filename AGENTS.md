@@ -34,7 +34,7 @@ documented changes. `CORE/sim/` holds the simulations.
 |-------|--------|--------|
 | R6 | SDRAM | Main target, tested on hardware by the maintainer (`CORE/CORE-R6.xpr`) |
 | R4, R5 | SDRAM | Same design (`CORE-R4.xpr`, `CORE-R5.xpr`); not tested on hardware |
-| R3, R3A | no SDRAM | Block RAM build (`CORE-R3.xpr`): 512 KB ST RAM, no Viking, no STEroids; R3A confirmed by a tester (issue #2) |
+| R3, R3A | no SDRAM | Block RAM build (`CORE-R3.xpr`): 512 KB ST RAM, no Viking, no STEroids; R3A and R3 confirmed by testers (issues #2, #22) |
 
 The maintainer only has an R6. Never call a build for another board "working" before a tester has
 reported it.
